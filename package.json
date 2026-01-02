@@ -1,0 +1,19 @@
+{
+  "name": "saas-mfe-project",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "private": true,
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "echo 'Selecciona un workspace para iniciar'"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "packageManager": "pnpm@10.17.1",
+  "workspaces": [
+    "packages/*",
+    "infrastructure/*"
+  ]
+}
