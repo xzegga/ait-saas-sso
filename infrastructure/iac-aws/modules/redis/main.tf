@@ -8,11 +8,25 @@ resource "aws_security_group" "redis_sg" {
     to_port     = 6379
     cidr_blocks = ["10.0.0.0/8"] # Allow access from the entire 10.x.x.x network range
   }
+
+  tags = merge(
+    var.common_tags,
+    {
+      Name = "${var.project_name_prefix}-${var.environment}-redis-sg"
+    }
+  )
 }
 
 resource "aws_elasticache_subnet_group" "redis_subnet_group" {
   name       = "${var.project_name_prefix}-${var.environment}-redis-sng"
   subnet_ids = var.subnet_ids
+
+  tags = merge(
+    var.common_tags,
+    {
+      Name = "${var.project_name_prefix}-${var.environment}-redis-sng"
+    }
+  )
 }
 
 # Traditional ElastiCache Cluster (for PROD or when use_serverless = false)
@@ -28,7 +42,12 @@ resource "aws_elasticache_cluster" "valkey_cache" {
   engine_version       = "7.2"
   port                 = 6379
   
-  tags = var.common_tags
+  tags = merge(
+    var.common_tags,
+    {
+      Name = "${var.project_name_prefix}-${var.environment}-valkey-cache"
+    }
+  )
 }
 
 # ElastiCache Serverless Cache (for DEV when use_serverless = true)
@@ -56,5 +75,10 @@ resource "aws_elasticache_serverless_cache" "valkey_serverless" {
   snapshot_retention_limit  = 1
   subnet_ids                = var.subnet_ids
 
-  tags = var.common_tags
+  tags = merge(
+    var.common_tags,
+    {
+      Name = "${var.project_name_prefix}-${var.environment}-valkey-serverless"
+    }
+  )
 }
