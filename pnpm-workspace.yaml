@@ -1,0 +1,9 @@
+packages:
+  # Aplicaciones frontend (React, Vue, Next.js, etc.)
+  - 'apps/*'
+  
+  # Paquetes compartidos (librerías, utilidades, componentes)
+  - 'packages/*'
+  
+  # Infraestructura (si necesita package.json para scripts)
+  - 'infrastructure/*'

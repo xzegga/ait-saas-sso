@@ -1,0 +1,94 @@
+#!/usr/bin/expect -f
+
+set timeout 600
+spawn pnpm create refine-app@latest ait-saas-sso-admin
+
+# Esperar y responder a cada pregunta interactiva
+expect {
+    timeout { 
+        puts "Timeout esperando respuesta"
+        exit 1
+    }
+    
+    # Template selection - usar flechas para seleccionar refine-vite
+    -re "Choose a project template" {
+        send "\r"
+        exp_continue
+    }
+    -re "refine-vite" {
+        send "\r"
+        exp_continue
+    }
+    
+    # Nombre del proyecto
+    -re "What would you like to name your project" {
+        send "\r"
+        exp_continue
+    }
+    
+    # Backend service - buscar supabase en las opciones
+    -re "Choose your backend service" {
+        send "\033\[B"  # Arrow down to find supabase
+        send "\033\[B"
+        send "\033\[B"
+        send "\r"
+        exp_continue
+    }
+    -re "data-provider-supabase" {
+        send "\r"
+        exp_continue
+    }
+    
+    # UI Framework - buscar shadcn
+    -re "Do you want to use a UI Framework" {
+        send "\033\[B"  # Navigate to shadcn
+        send "\r"
+        exp_continue
+    }
+    -re "shadcn" {
+        send "\r"
+        exp_continue
+    }
+    
+    # Example pages
+    -re "Do you want to add example pages" {
+        send "n\r"
+        exp_continue
+    }
+    -re "no" {
+        send "\r"
+        exp_continue
+    }
+    
+    # Package manager - buscar pnpm
+    -re "Choose a package manager" {
+        send "\033\[B"  # Arrow down to pnpm
+        send "\r"
+        exp_continue
+    }
+    -re "pnpm" {
+        send "\r"
+        exp_continue
+    }
+    
+    # Email (opcional)
+    -re "Mind sharing your email" {
+        send "\r"
+        exp_continue
+    }
+    
+    # Éxito
+    -re "Successfully created" {
+        expect eof
+    }
+    
+    # Error
+    -re "Error" {
+        puts "Error durante la creación"
+        exit 1
+    }
+    
+    eof
+}
+
+wait

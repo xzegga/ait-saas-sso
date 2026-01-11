@@ -1,19 +1,27 @@
 {
-  "name": "saas-mfe-project",
+  "name": "ait-saas-sso",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "AiT SaaS SSO Platform - Monorepo for infrastructure, database, and frontend applications",
   "private": true,
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "echo 'Selecciona un workspace para iniciar'"
+    "dev": "echo 'Selecciona un workspace para iniciar: pnpm --filter <workspace> dev'",
+    "build": "echo 'Selecciona un workspace para construir: pnpm --filter <workspace> build'",
+    "lint": "echo 'Ejecuta lint en todos los workspaces con package.json'",
+    "clean": "pnpm -r exec -- rm -rf node_modules dist build .next out",
+    "admin:dev": "pnpm --filter ./apps/ait-sso-admin dev",
+    "admin:build": "pnpm --filter ./apps/ait-sso-admin build",
+    "admin:start": "pnpm --filter ./apps/ait-sso-admin start"
   },
-  "keywords": [],
+  "keywords": [
+    "saas",
+    "sso",
+    "monorepo",
+    "terraform",
+    "supabase",
+    "react"
+  ],
   "author": "",
   "license": "ISC",
-  "packageManager": "pnpm@10.17.1",
-  "workspaces": [
-    "packages/*",
-    "infrastructure/*"
-  ]
+  "packageManager": "pnpm@10.17.1"
 }

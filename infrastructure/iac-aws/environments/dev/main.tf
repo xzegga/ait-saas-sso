@@ -50,3 +50,19 @@ resource "aws_s3_bucket_public_access_block" "mfe_bucket_block" {
   ignore_public_acls      = true
   restrict_public_buckets = true
 }
+
+# 4. CLOUDFRONT DISTRIBUTION FOR SPA
+module "cloudfront" {
+  source = "../../modules/cloudfront"
+
+  # Inputs
+  project_name_prefix              = var.project_name_prefix
+  environment                      = var.environment
+  common_tags                      = local.common_tags
+  s3_bucket_id                     = aws_s3_bucket.mfe_static_hosting.id
+  s3_bucket_name                   = aws_s3_bucket.mfe_static_hosting.bucket
+  s3_bucket_arn                    = aws_s3_bucket.mfe_static_hosting.arn
+  s3_bucket_regional_domain_name   = aws_s3_bucket.mfe_static_hosting.bucket_regional_domain_name
+  enable_ipv6                      = true
+  price_class                      = "PriceClass_100" # North America and Europe only (cheapest for DEV)
+}

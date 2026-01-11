@@ -1,0 +1,6 @@
+# Este directorio contendrá las aplicaciones frontend
+# Ejemplos:
+# - apps/admin-web (Panel de administración)
+# - apps/portal-web (Portal de clientes)
+# - apps/auth-web (Página de autenticación)
+# etc.

@@ -1,0 +1,7 @@
+# Este directorio contendrá paquetes compartidos
+# Ejemplos:
+# - packages/shared-ui (Componentes UI compartidos)
+# - packages/types (Tipos TypeScript compartidos)
+# - packages/utils (Utilidades compartidas)
+# - packages/config (Configuraciones compartidas: ESLint, TypeScript, etc.)
+# etc.
