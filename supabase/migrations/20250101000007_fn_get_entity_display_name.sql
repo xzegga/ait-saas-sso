@@ -1,13 +1,16 @@
 -- ==============================================================================
--- UPDATE RECYCLE BIN FUNCTIONS FOR NEW PLANS & ENTITLEMENTS STRUCTURE
+-- GET ENTITY DISPLAY NAME FUNCTION
+-- ==============================================================================
+-- Helper function to get a human-readable display name for an entity
+-- Used by recycle bin functions
 -- ==============================================================================
 
--- Update fn_get_entity_display_name to handle new tables
 create or replace function public.fn_get_entity_display_name(
   p_table_name text,
   p_entity_id uuid
 ) returns text
 language plpgsql
+stable
 security definer
 set search_path = public
 as $$
@@ -32,6 +35,8 @@ begin
       select name into v_display_name from public.organizations where id = p_entity_id;
     when 'profiles' then
       select coalesce(full_name, email, 'User') into v_display_name from public.profiles where id = p_entity_id;
+    when 'product_role_definitions' then
+      select role_name into v_display_name from public.product_role_definitions where id = p_entity_id;
     else
       v_display_name := p_entity_id::text;
   end case;
@@ -40,5 +45,6 @@ begin
 end;
 $$;
 
--- Update comment
-comment on column public.recycle_bin.entity_type is 'Tipo de entidad eliminada (e.g., products, plans, entitlements, product_plans, organizations, profiles)';
+grant execute on function public.fn_get_entity_display_name(text, uuid) to authenticated;
+
+comment on function public.fn_get_entity_display_name is 'Función helper para obtener el nombre legible de una entidad según su tipo.';

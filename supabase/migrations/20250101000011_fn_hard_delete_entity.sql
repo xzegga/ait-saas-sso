@@ -1,8 +1,10 @@
 -- ==============================================================================
--- FUNCIÓN PARA HARD DELETE (BORRADO PERMANENTE)
+-- HARD DELETE ENTITY FUNCTION
+-- ==============================================================================
+-- Function for hard delete. Permanently deletes the original record from the table
+-- but keeps the reference in recycle_bin marked as non-restorable
 -- ==============================================================================
 
--- Función para hard delete que borra el registro original pero mantiene la referencia en recycle_bin
 create or replace function public.fn_hard_delete_entity(
   p_recycle_bin_id bigint,
   p_deleted_by_id uuid,
@@ -71,8 +73,6 @@ exception
 end;
 $$;
 
--- Grant execute permission
 grant execute on function public.fn_hard_delete_entity(bigint, uuid, text) to authenticated;
 
--- Add comment
 comment on function public.fn_hard_delete_entity is 'Función para hard delete. Borra permanentemente el registro original de la tabla pero mantiene la referencia en recycle_bin marcada como no restaurable.';

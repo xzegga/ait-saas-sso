@@ -1,3 +1,9 @@
+-- ==============================================================================
+-- SECURITY HELPER FUNCTIONS
+-- ==============================================================================
+-- Functions for checking user permissions and roles from JWT claims
+-- ==============================================================================
+
 -- 1. Check if Super Admin
 create or replace function public.is_super_admin()
 returns boolean

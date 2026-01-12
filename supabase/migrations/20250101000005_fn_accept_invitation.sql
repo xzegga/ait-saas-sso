@@ -1,4 +1,9 @@
--- 1. ACCEPT INVITATION FUNCTION
+-- ==============================================================================
+-- ACCEPT INVITATION FUNCTION
+-- ==============================================================================
+-- Function to accept organization invitations
+-- ==============================================================================
+
 create or replace function public.accept_invitation(lookup_token uuid)
 returns jsonb
 language plpgsql

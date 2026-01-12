@@ -1,16 +1,25 @@
+-- ==============================================================================
+-- ROW LEVEL SECURITY (RLS) POLICIES
+-- ==============================================================================
+-- All RLS policies consolidated in one file
+-- ==============================================================================
+
 -- Enable RLS on all tables
 alter table public.profiles enable row level security;
 alter table public.organizations enable row level security;
 alter table public.org_members enable row level security;
 alter table public.org_product_subscriptions enable row level security;
 alter table public.products enable row level security;
-alter table public.product_plans enable row level security;
 alter table public.product_role_definitions enable row level security;
-alter table public.product_features enable row level security;
+alter table public.entitlements enable row level security;
+alter table public.plans enable row level security;
 alter table public.plan_entitlements enable row level security;
+alter table public.product_plans enable row level security;
 alter table public.member_product_roles enable row level security;
 alter table public.org_invitations enable row level security;
 alter table public.super_admins enable row level security;
+alter table public.role_templates enable row level security;
+alter table public.recycle_bin enable row level security;
 
 -- ====================== ORGANIZATIONS ======================
 create policy "Select Orgs" on public.organizations for select to authenticated
@@ -61,34 +70,77 @@ create policy "Manage Products" on public.products for all to authenticated
   using (public.is_super_admin())
   with check (public.is_super_admin());
 
--- Product Plans: Public read, Super Admin full CRUD
-create policy "Public Read Plans" on public.product_plans for select to authenticated using (true);
-create policy "Insert Product Plans" on public.product_plans for insert to authenticated
-  with check (public.is_super_admin());
-create policy "Update Product Plans" on public.product_plans for update to authenticated
-  using (public.is_super_admin())
-  with check (public.is_super_admin());
-create policy "Delete Product Plans" on public.product_plans for delete to authenticated
-  using (public.is_super_admin());
-
 -- Product Role Definitions: Public read, Super Admin full CRUD
 create policy "Public Read Role Definitions" on public.product_role_definitions for select to authenticated using (true);
 create policy "Manage Role Definitions" on public.product_role_definitions for all to authenticated
   using (public.is_super_admin())
   with check (public.is_super_admin());
 
--- Product Features: Public read, Super Admin full CRUD
-create policy "Public Read Features" on public.product_features for select to authenticated using (true);
-create policy "Manage Features" on public.product_features for all to authenticated
-  using (public.is_super_admin())
+-- ====================== ENTITLEMENTS ======================
+-- Entitlements: Public read (non-deleted), Super Admin full CRUD
+create policy "Public Read Entitlements" on public.entitlements for select 
+  to authenticated using (deleted_at is null);
+
+create policy "Insert Entitlements" on public.entitlements for insert 
+  to authenticated with check (public.is_super_admin());
+
+create policy "Update Entitlements" on public.entitlements for update 
+  to authenticated 
+  using (public.is_super_admin() and deleted_at is null)
   with check (public.is_super_admin());
 
+create policy "Delete Entitlements" on public.entitlements for delete 
+  to authenticated using (public.is_super_admin());
+
+-- ====================== PLANS ======================
+-- Plans: Public read (non-deleted), Super Admin full CRUD
+create policy "Public Read Plans" on public.plans for select 
+  to authenticated using (deleted_at is null);
+
+create policy "Insert Plans" on public.plans for insert 
+  to authenticated with check (public.is_super_admin());
+
+create policy "Update Plans" on public.plans for update 
+  to authenticated 
+  using (public.is_super_admin() and deleted_at is null)
+  with check (public.is_super_admin());
+
+create policy "Delete Plans" on public.plans for delete 
+  to authenticated using (public.is_super_admin());
+
+-- ====================== PLAN ENTITLEMENTS ======================
 -- Plan Entitlements: Public read, Super Admin full CRUD
-create policy "Public Read Entitlements" on public.plan_entitlements for select to authenticated using (true);
-create policy "Manage Entitlements" on public.plan_entitlements for all to authenticated
+create policy "Public Read Plan Entitlements" on public.plan_entitlements for select 
+  to authenticated using (true);
+
+create policy "Insert Plan Entitlements" on public.plan_entitlements for insert 
+  to authenticated with check (public.is_super_admin());
+
+create policy "Update Plan Entitlements" on public.plan_entitlements for update 
+  to authenticated 
   using (public.is_super_admin())
   with check (public.is_super_admin());
 
+create policy "Delete Plan Entitlements" on public.plan_entitlements for delete 
+  to authenticated using (public.is_super_admin());
+
+-- ====================== PRODUCT PLANS ======================
+-- Product Plans: Public read (non-deleted), Super Admin full CRUD
+create policy "Public Read Product Plans" on public.product_plans for select 
+  to authenticated using (deleted_at is null);
+
+create policy "Insert Product Plans" on public.product_plans for insert 
+  to authenticated with check (public.is_super_admin());
+
+create policy "Update Product Plans" on public.product_plans for update 
+  to authenticated 
+  using (public.is_super_admin() and deleted_at is null)
+  with check (public.is_super_admin());
+
+create policy "Delete Product Plans" on public.product_plans for delete 
+  to authenticated using (public.is_super_admin());
+
+-- ====================== MEMBER PRODUCT ROLES ======================
 -- Member Product Roles: Super Admin full access, Owner can manage roles in their org
 create policy "View Member Roles" on public.member_product_roles for select to authenticated
   using (
@@ -123,3 +175,35 @@ create policy "View Super Admins" on public.super_admins for select to authentic
 create policy "Manage Super Admins" on public.super_admins for all to authenticated
   using (public.is_super_admin())
   with check (public.is_super_admin());
+
+-- ====================== ROLE TEMPLATES ======================
+-- Role Templates: Only super_admin can view and manage
+create policy "View Role Templates" on public.role_templates for select to authenticated
+  using (public.is_super_admin());
+
+create policy "Manage Role Templates" on public.role_templates for all to authenticated
+  using (public.is_super_admin())
+  with check (public.is_super_admin());
+
+-- ====================== RECYCLE BIN ======================
+-- Recycle Bin: Only super_admin can access
+create policy recycle_bin_select_super_admin
+  on public.recycle_bin
+  for select
+  using (public.is_super_admin());
+
+create policy recycle_bin_insert_super_admin
+  on public.recycle_bin
+  for insert
+  with check (public.is_super_admin());
+
+create policy recycle_bin_update_super_admin
+  on public.recycle_bin
+  for update
+  using (public.is_super_admin())
+  with check (public.is_super_admin());
+
+create policy recycle_bin_delete_super_admin
+  on public.recycle_bin
+  for delete
+  using (public.is_super_admin());
