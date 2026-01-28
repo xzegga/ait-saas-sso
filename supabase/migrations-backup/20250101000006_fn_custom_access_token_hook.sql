@@ -39,6 +39,7 @@ begin
     where om.user_id = _user_id and om.org_id = _active_org_id limit 1;
 
     -- Get plan and features (using new entitlements structure)
+    -- Only include subscriptions that are active or valid (non-expired) trials
     select 
       pl.name, 
       coalesce(
@@ -57,7 +58,13 @@ begin
     from public.org_product_subscriptions ops
     join public.plans pl on ops.plan_id = pl.id
     where ops.org_id = _active_org_id
-      and ops.status = 'active'
+      and (
+        ops.status = 'active' 
+        or (
+          ops.status = 'trial' 
+          and (ops.trial_ends_at IS NULL OR ops.trial_ends_at > now())
+        )
+      )
     limit 1;
   end if;
 
