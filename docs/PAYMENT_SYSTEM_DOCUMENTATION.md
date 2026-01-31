@@ -1,361 +1,370 @@
-# Documentación del Sistema de Pagos Genérico
+# Generic Payment System Documentation
 
-Este documento explica cómo funciona el sistema de pagos genérico y cómo se relaciona con el resto de las secciones del admin panel.
-
----
-
-## 🎯 Visión General
-
-El sistema de pagos está diseñado para ser **genérico y extensible**, permitiendo integrar múltiples payment providers (Stripe, PayPal, Razorpay, etc.) sin necesidad de crear tablas específicas para cada uno.
-
-### Principios de Diseño:
-1. **Normalización:** Estados y datos se normalizan para compatibilidad cross-provider
-2. **Extensibilidad:** Fácil agregar nuevos providers sin cambios en el schema
-3. **Trazabilidad:** Todo evento de webhook se registra para debugging
-4. **Idempotencia:** Los webhooks se procesan de forma idempotente
+This document explains how the generic payment system works and how it relates to the rest of the admin panel sections.
 
 ---
 
-## 📊 Arquitectura de Tablas
+## 🎯 Overview
+
+The payment system is designed to be **generic and extensible**, allowing integration of multiple payment providers (Stripe, PayPal, Razorpay, etc.) without needing to create provider-specific tables.
+
+### Design Principles:
+1. **Normalization:** States and data are normalized for cross-provider compatibility
+2. **Extensibility:** Easy to add new providers without schema changes
+3. **Traceability:** All webhook events are logged for debugging
+4. **Idempotency:** Webhooks are processed idempotently
+
+---
+
+## 📊 Table Architecture
 
 ### 1. `payment_providers`
-**Propósito:** Catálogo de proveedores de pago disponibles
+**Purpose:** Catalog of available payment providers
 
-**Campos clave:**
-- `name`: Identificador técnico (ej: 'stripe', 'paypal')
-- `display_name`: Nombre para mostrar en UI
+**Key fields:**
+- `name`: Technical identifier (e.g., 'stripe', 'paypal')
+- `display_name`: Display name for UI
 - `status`: active, inactive, deprecated
-- `config_schema`: JSON schema definiendo configuración requerida
+- `config_schema`: JSON schema defining required configuration
 
-**Relaciones:**
-- Una cuenta de pago pertenece a un provider
-- Un producto de pago pertenece a un provider
-- Un precio de pago pertenece a un provider
-- Una suscripción de pago pertenece a un provider
-- Un invoice de pago pertenece a un provider
-- Un webhook event pertenece a un provider
+**Relationships:**
+- A payment account belongs to a provider
+- A payment product belongs to a provider
+- A payment price belongs to a provider
+- A payment subscription belongs to a provider
+- A payment invoice belongs to a provider
+- A webhook event belongs to a provider
 
-**En el Admin:**
-- Sección: **Payment Providers** (ya implementado)
-- Permite crear/editar/deprecar providers
-- Configurar schema de configuración
+**In Admin:**
+- Section: **Payment Providers** (already implemented)
+- Allows creating/editing/deprecating providers
+- Configure configuration schema
 
 ---
 
 ### 2. `payment_accounts`
-**Propósito:** Cuentas de pago de organizaciones en providers
+**Purpose:** Organization payment accounts in providers
 
-**Campos clave:**
-- `org_id`: Organización dueña de la cuenta
-- `provider_id`: Provider de pago
-- `external_account_id`: ID de la cuenta en el provider (ej: 'cus_xxx' en Stripe)
-- `email`: Email de facturación
-- `metadata`: Datos específicos del provider (payment methods, tax IDs, etc.)
+**Key fields:**
+- `org_id`: Organization that owns the account
+- `provider_id`: Payment provider
+- `external_account_id`: Account ID in the provider (e.g., 'cus_xxx' in Stripe)
+- `email`: Billing email
+- `metadata`: Provider-specific data (payment methods, tax IDs, etc.)
 - `status`: active, inactive, suspended
 
-**Relaciones:**
-- Una organización puede tener múltiples cuentas (una por provider)
-- Una cuenta puede tener múltiples suscripciones
-- Una cuenta puede tener múltiples invoices
+**Relationships:**
+- An organization can have multiple accounts (one per provider)
+- An account can have multiple subscriptions
+- An account can have multiple invoices
 
-**En el Admin:**
-- Sección: **Payment Accounts** (pendiente)
-- Ver todas las cuentas por organización
-- Ver todas las cuentas por provider
-- Crear/editar cuentas
-- Ver suscripciones e invoices asociados
+**In Admin:**
+- Section: **Payment Accounts** (pending)
+- View all accounts by organization
+- View all accounts by provider
+- Create/edit accounts
+- View associated subscriptions and invoices
 
-**Relación con otras secciones:**
-- **Organizations:** Ver cuenta de pago asociada
-- **Subscriptions:** Ver cuenta de pago de la organización
-- **Invoices:** Ver cuenta de pago que generó el invoice
+**Relationship with other sections:**
+- **Organizations:** View associated payment account
+- **Subscriptions:** View organization's payment account
+- **Invoices:** View account that generated the invoice
 
 ---
 
 ### 3. `payment_products`
-**Propósito:** Mapeo de productos internos a productos del provider
+**Purpose:** Mapping of internal products to provider products
 
-**Campos clave:**
-- `product_id`: Producto interno
-- `provider_id`: Provider de pago
-- `external_product_id`: ID del producto en el provider (ej: 'prod_xxx' en Stripe)
-- `metadata`: Datos específicos del provider
+**Key fields:**
+- `product_id`: Internal product
+- `provider_id`: Payment provider
+- `external_product_id`: Product ID in the provider (e.g., 'prod_xxx' in Stripe)
+- `metadata`: Provider-specific data
 
-**Relaciones:**
-- Un producto interno puede estar mapeado a múltiples providers
-- Un producto de pago puede tener múltiples precios
+**Relationships:**
+- An internal product can be mapped to multiple providers
+- A payment product can have multiple prices
 
-**En el Admin:**
-- Sección: **Payment Products** (pendiente)
-- Ver qué productos están sincronizados con qué providers
-- Crear/editar mapeos
-- Ver metadata del provider
+**In Admin:**
+- Section: **Payment Products** (pending)
+- View which products are synchronized with which providers
+- Create/edit mappings
+- View provider metadata
 
-**Relación con otras secciones:**
-- **Products:** Ver mapeos de payment products
-- **Payment Prices:** Ver producto de pago asociado
+**Relationship with other sections:**
+- **Products:** View payment product mappings
+- **Payment Prices:** View associated payment product
 
 ---
 
 ### 4. `payment_prices`
-**Propósito:** Mapeo de planes a precios del provider
+**Purpose:** Mapping of plans to provider prices
 
-**Campos clave:**
-- `product_plan_id`: Relación producto-plan interna
-- `provider_id`: Provider de pago
-- `external_price_id`: ID del precio en el provider (ej: 'price_xxx' en Stripe)
-- `external_product_id`: Referencia al producto de pago
-- `billing_interval`: month, year, day, week
-- `currency`: Código de moneda
-- `amount`: Monto en cents o unidad más pequeña
-- `metadata`: Datos específicos del provider
+**Key fields:**
+- `product_plan_id`: Internal product-plan relationship
+- `provider_id`: Payment provider
+- `external_price_id`: Price ID in the provider (e.g., 'price_xxx' in Stripe)
+- `external_product_id`: Reference to payment product
+- `billing_interval`: References `billing_intervals.key` (dynamic, not hardcoded)
+- `currency`: Currency code
+- `amount`: Amount in cents or smallest currency unit
+- `metadata`: Provider-specific data
 
-**Relaciones:**
-- Un plan interno puede tener múltiples precios (uno por provider)
-- Un precio de pago pertenece a un producto de pago
-- Un precio de pago puede tener múltiples suscripciones
+**Relationships:**
+- An internal plan can have multiple prices (one per provider)
+- A payment price belongs to a payment product
+- A payment price can have multiple subscriptions
 
-**En el Admin:**
-- Sección: **Payment Prices** (pendiente)
-- Ver precios por plan y provider
-- Crear/editar mapeos
-- Ver billing intervals y currencies
+**Important:** The `billing_interval` field references the `billing_intervals` table, allowing dynamic billing intervals (month, year, two_years, etc.) instead of hardcoded values.
 
-**Relación con otras secciones:**
-- **Product Plans:** Ver precios de pago asociados
-- **Payment Subscriptions:** Ver precio de pago usado
+**In Admin:**
+- Section: **Payment Prices** (pending)
+- View prices per plan and provider
+- Create/edit mappings
+- View billing intervals and currencies
+
+**Relationship with other sections:**
+- **Product Plans:** View associated payment prices
+- **Payment Subscriptions:** View payment price used
 
 ---
 
 ### 5. `payment_subscriptions`
-**Propósito:** Suscripciones sincronizadas con providers de pago
+**Purpose:** Subscriptions synchronized with payment providers
 
-**Campos clave:**
-- `subscription_id`: Suscripción interna (`org_product_subscriptions.id`)
-- `provider_id`: Provider de pago
-- `payment_account_id`: Cuenta de pago
-- `external_subscription_id`: ID de suscripción en el provider (ej: 'sub_xxx' en Stripe)
-- `external_price_id`: Precio usado
-- `status`: Estado normalizado (active, trial, past_due, canceled, incomplete)
-- `provider_status`: Estado original del provider (para debugging)
-- `current_period_start/end`: Período de facturación actual
-- `cancel_at_period_end`: Si está programada para cancelar
-- `canceled_at`: Fecha de cancelación
-- `metadata`: Datos específicos del provider
+**Key fields:**
+- `subscription_id`: Internal subscription (`org_product_subscriptions.id`)
+- `provider_id`: Payment provider
+- `payment_account_id`: Payment account
+- `external_subscription_id`: Subscription ID in the provider (e.g., 'sub_xxx' in Stripe)
+- `external_price_id`: Price used
+- `status`: Normalized status (active, trial, past_due, canceled, incomplete)
+- `provider_status`: Original provider status (for debugging)
+- `current_period_start/end`: Current billing period
+- `cancel_at_period_end`: If scheduled to cancel
+- `canceled_at`: Cancellation date
+- `metadata`: Provider-specific data
 
-**Relaciones:**
-- Una suscripción interna puede tener múltiples suscripciones de pago (una por provider)
-- Una suscripción de pago pertenece a una cuenta de pago
-- Una suscripción de pago puede tener múltiples invoices
+**Relationships:**
+- An internal subscription can have multiple payment subscriptions (one per provider)
+- A payment subscription belongs to a payment account
+- A payment subscription can have multiple invoices
 
-**En el Admin:**
-- Sección: **Payment Subscriptions** (pendiente)
-- Ver todas las suscripciones sincronizadas
-- Filtrar por organización, provider, estado
-- Ver estado normalizado vs provider_status
-- Ver períodos de facturación
-- Link a suscripción interna
+**In Admin:**
+- Section: **Payment Subscriptions** (pending)
+- View all synchronized subscriptions
+- Filter by organization, provider, status
+- View normalized status vs provider_status
+- View billing periods
+- Link to internal subscription
 
-**Relación con otras secciones:**
-- **Subscriptions:** Ver suscripción de pago asociada
-- **Organizations:** Ver suscripciones de pago de la organización
-- **Payment Accounts:** Ver suscripciones de la cuenta
-- **Invoices:** Ver suscripción que generó el invoice
+**Relationship with other sections:**
+- **Subscriptions:** View associated payment subscription
+- **Organizations:** View organization's payment subscriptions
+- **Payment Accounts:** View account's subscriptions
+- **Invoices:** View subscription that generated the invoice
 
 ---
 
 ### 6. `payment_invoices`
-**Propósito:** Facturas de providers de pago
+**Purpose:** Invoices from payment providers
 
-**Campos clave:**
-- `provider_id`: Provider de pago
-- `payment_account_id`: Cuenta de pago
-- `payment_subscription_id`: Suscripción de pago (opcional)
-- `org_id`: Organización (para acceso rápido)
-- `external_invoice_id`: ID del invoice en el provider (ej: 'in_xxx' en Stripe)
-- `amount_due`: Monto debido en cents
-- `amount_paid`: Monto pagado en cents
-- `currency`: Código de moneda
-- `status`: Estado normalizado (draft, open, paid, void, uncollectible)
-- `provider_status`: Estado original del provider
-- `invoice_pdf`: URL al PDF del invoice
-- `hosted_invoice_url`: URL a la página del invoice
-- `period_start/end`: Período facturado
-- `metadata`: Datos específicos del provider
+**Key fields:**
+- `provider_id`: Payment provider
+- `payment_account_id`: Payment account
+- `payment_subscription_id`: Payment subscription (optional)
+- `org_id`: Organization (for quick access)
+- `external_invoice_id`: Invoice ID in the provider (e.g., 'in_xxx' in Stripe)
+- `amount_due`: Amount due in cents
+- `amount_paid`: Amount paid in cents
+- `currency`: Currency code
+- `status`: Normalized status (draft, open, paid, void, uncollectible)
+- `provider_status`: Original provider status
+- `invoice_pdf`: URL to invoice PDF
+- `hosted_invoice_url`: URL to invoice page
+- `period_start/end`: Billed period
+- `metadata`: Provider-specific data
 
-**Relaciones:**
-- Un invoice pertenece a un provider
-- Un invoice puede pertenecer a una cuenta de pago
-- Un invoice puede pertenecer a una suscripción de pago
-- Un invoice pertenece a una organización
+**Relationships:**
+- An invoice belongs to a provider
+- An invoice can belong to a payment account
+- An invoice can belong to a payment subscription
+- An invoice belongs to an organization
 
-**En el Admin:**
-- Sección: **Billing/Invoices** (implementado pero usa `useStripeInvoices`, necesita migración)
-- Ver todas las facturas
-- Filtrar por organización, provider, estado
-- Descargar PDFs
-- Ver hosted invoice URLs
-- Ver período facturado
+**In Admin:**
+- Section: **Billing/Invoices** (implemented, uses generic `usePaymentInvoices`)
+- View all invoices
+- Filter by organization, provider, status
+- Download PDFs
+- View hosted invoice URLs
+- View billed period
 
-**Relación con otras secciones:**
-- **Organizations:** Ver invoices de la organización
-- **Subscriptions:** Ver invoices de la suscripción
-- **Payment Accounts:** Ver invoices de la cuenta
-- **Payment Subscriptions:** Ver invoices de la suscripción de pago
+**Relationship with other sections:**
+- **Organizations:** View organization's invoices
+- **Subscriptions:** View subscription's invoices
+- **Payment Accounts:** View account's invoices
+- **Payment Subscriptions:** View payment subscription's invoices
 
 ---
 
 ### 7. `payment_webhook_events`
-**Propósito:** Log de eventos de webhooks de todos los providers
+**Purpose:** Log of webhook events from all providers
 
-**Campos clave:**
-- `provider_id`: Provider de pago
-- `external_event_id`: ID del evento en el provider (ej: 'evt_xxx' en Stripe)
-- `event_type`: Tipo normalizado (ej: 'subscription.created', 'invoice.paid')
-- `provider_event_type`: Tipo original del provider (ej: 'customer.subscription.created' en Stripe)
-- `processed`: Si el evento fue procesado
-- `processed_at`: Fecha de procesamiento
-- `event_data`: Payload completo del webhook (JSONB)
-- `error_message`: Mensaje de error si el procesamiento falló
+**Key fields:**
+- `provider_id`: Payment provider
+- `external_event_id`: Event ID in the provider (e.g., 'evt_xxx' in Stripe)
+- `event_type`: Normalized type (e.g., 'subscription.created', 'invoice.paid')
+- `provider_event_type`: Original provider type (e.g., 'customer.subscription.created' in Stripe)
+- `processed`: Whether the event was processed
+- `processed_at`: Processing date
+- `event_data`: Complete webhook payload (JSONB)
+- `error_message`: Error message if processing failed
 
-**Relaciones:**
-- Un evento pertenece a un provider
-- Un evento puede estar relacionado con múltiples entidades (cuenta, suscripción, invoice)
+**Relationships:**
+- An event belongs to a provider
+- An event can be related to multiple entities (account, subscription, invoice)
 
-**En el Admin:**
-- Sección: **Payment Webhook Events** (pendiente)
-- Ver todos los eventos recibidos
-- Filtrar por provider, tipo, estado
-- Ver payload completo
-- Re-procesar eventos fallidos
-- Estadísticas de eventos
+**In Admin:**
+- Section: **Payment Webhook Events** (pending)
+- View all received events
+- Filter by provider, type, status
+- View complete payload
+- Re-process failed events
+- Event statistics
 
-**Relación con otras secciones:**
-- **Payment Providers:** Ver eventos del provider
-- **Payment Subscriptions:** Ver eventos relacionados
-- **Invoices:** Ver eventos relacionados
-
----
-
-## 🔄 Flujos de Sincronización
-
-### Flujo 1: Crear Suscripción
-1. Super Admin crea suscripción en **Subscriptions** (`org_product_subscriptions`)
-2. Si hay payment provider configurado:
-   - Se crea/actualiza `payment_account` (si no existe)
-   - Se crea/actualiza `payment_product` (mapeo producto)
-   - Se crea/actualiza `payment_price` (mapeo plan)
-   - Se crea `payment_subscription` (sincronización)
-3. El webhook del provider confirma la creación
-4. Se actualiza el estado en ambas tablas (interna y payment)
-
-### Flujo 2: Webhook de Invoice
-1. Provider envía webhook de invoice creado/pagado
-2. Se registra en `payment_webhook_events`
-3. Se procesa el evento:
-   - Se crea/actualiza `payment_invoice`
-   - Se actualiza estado de `payment_subscription` si aplica
-   - Se actualiza estado de `org_product_subscriptions` si aplica
-4. Se marca el evento como procesado
-
-### Flujo 3: Cambio de Estado de Suscripción
-1. Provider envía webhook (ej: subscription.canceled)
-2. Se registra en `payment_webhook_events`
-3. Se actualiza `payment_subscription.status` (normalizado)
-4. Se actualiza `org_product_subscriptions.status` (sincronizado)
-5. Se marca el evento como procesado
+**Relationship with other sections:**
+- **Payment Providers:** View provider's events
+- **Payment Subscriptions:** View related events
+- **Invoices:** View related events
 
 ---
 
-## 🔗 Relaciones con Otras Secciones
+## 🔄 Synchronization Flows
+
+### Flow 1: Create Subscription
+1. Super Admin creates subscription in **Subscriptions** (`org_product_subscriptions`)
+2. If payment provider is configured:
+   - Create/update `payment_account` (if it doesn't exist)
+   - Create/update `payment_product` (product mapping)
+   - Create/update `payment_price` (plan mapping)
+   - Create `payment_subscription` (synchronization)
+3. Provider webhook confirms creation
+4. Status is updated in both tables (internal and payment)
+
+### Flow 2: Invoice Webhook
+1. Provider sends invoice created/paid webhook
+2. Event is logged in `payment_webhook_events`
+3. Event is processed:
+   - Create/update `payment_invoice`
+   - Update `payment_subscription` status if applicable
+   - Update `org_product_subscriptions` status if applicable
+4. Event is marked as processed
+
+### Flow 3: Subscription Status Change
+1. Provider sends webhook (e.g., subscription.canceled)
+2. Event is logged in `payment_webhook_events`
+3. `payment_subscription.status` is updated (normalized)
+4. `org_product_subscriptions.status` is updated (synchronized)
+5. Event is marked as processed
+
+---
+
+## 🔗 Relationships with Other Sections
 
 ### Organizations
-- **Ver:** Cuenta de pago asociada (`payment_accounts`)
-- **Ver:** Suscripciones de pago activas (`payment_subscriptions`)
-- **Ver:** Historial de facturación (`payment_invoices`)
-- **Ver:** Total gastado (suma de invoices pagados)
+- **View:** Associated payment account (`payment_accounts`)
+- **View:** Active payment subscriptions (`payment_subscriptions`)
+- **View:** Billing history (`payment_invoices`)
+- **View:** Total spent (sum of paid invoices)
 
 ### Subscriptions (`org_product_subscriptions`)
-- **Ver:** Suscripción de pago asociada (`payment_subscriptions`)
-- **Ver:** Invoices relacionados (`payment_invoices`)
-- **Ver:** Estado sincronizado vs estado interno
-- **Sincronizar:** Manualmente si hay desincronización
+- **View:** Associated payment subscription (`payment_subscriptions`)
+- **View:** Related invoices (`payment_invoices`)
+- **View:** Synchronized status vs internal status
+- **Synchronize:** Manually if there's desynchronization
 
 ### Products
-- **Ver:** Mapeos de payment products (`payment_products`)
-- **Ver:** Qué providers tienen este producto sincronizado
+- **View:** Payment product mappings (`payment_products`)
+- **View:** Which providers have this product synchronized
 
 ### Product Plans
-- **Ver:** Precios de pago asociados (`payment_prices`)
-- **Ver:** Qué providers tienen este plan con precio
+- **View:** Associated payment prices (`payment_prices`)
+- **View:** Which providers have this plan with price
+- **Note:** Product plans are managed within the Products section, not as a separate page
+
+### Billing Intervals
+- **Purpose:** Dynamic billing interval configuration (month, year, custom intervals)
+- **Location:** Plans & Entitlements → Billing Intervals tab
+- **Relationship:** `payment_prices.billing_interval` references `billing_intervals.key`
+- **Default values:** Only "month" and "year" (day and week removed)
 
 ### Payment Providers
-- **Ver:** Cuentas creadas (`payment_accounts`)
-- **Ver:** Productos sincronizados (`payment_products`)
-- **Ver:** Precios configurados (`payment_prices`)
-- **Ver:** Suscripciones activas (`payment_subscriptions`)
-- **Ver:** Eventos de webhook (`payment_webhook_events`)
+- **View:** Created accounts (`payment_accounts`)
+- **View:** Synchronized products (`payment_products`)
+- **View:** Configured prices (`payment_prices`)
+- **View:** Active subscriptions (`payment_subscriptions`)
+- **View:** Webhook events (`payment_webhook_events`)
 
 ---
 
-## 🛠️ Funciones de Sincronización
+## 🛠️ Synchronization Functions
 
-Todas las funciones están en `supabase/migrations/20250101000012_functions_payment_sync.sql`:
+All functions are in `supabase/migrations/20250101000012_functions_payment_sync.sql`:
 
 ### `sync_payment_account(org_id, provider_id, external_account_id, ...)`
-Crea o actualiza una cuenta de pago para una organización.
+Creates or updates a payment account for an organization.
 
 ### `sync_payment_product(product_id, provider_id, external_product_id, ...)`
-Crea o actualiza el mapeo de un producto interno a un producto del provider.
+Creates or updates the mapping of an internal product to a provider product.
 
 ### `sync_payment_price(product_plan_id, provider_id, external_price_id, ...)`
-Crea o actualiza el mapeo de un plan a un precio del provider.
+Creates or updates the mapping of a plan to a provider price.
 
 ### `sync_payment_subscription(subscription_id, provider_id, ...)`
-Crea o actualiza una suscripción de pago y sincroniza el estado con la suscripción interna.
+Creates or updates a payment subscription and synchronizes status with the internal subscription.
 
 ### `sync_payment_invoice(provider_id, external_invoice_id, ...)`
-Crea o actualiza un invoice de pago desde un webhook.
+Creates or updates a payment invoice from a webhook.
 
 ### `log_payment_webhook_event(provider_id, external_event_id, ...)`
-Registra un evento de webhook (idempotente).
+Logs a webhook event (idempotent).
 
 ### `mark_payment_webhook_processed(event_id, error_message)`
-Marca un evento como procesado.
+Marks an event as processed.
 
 ---
 
-## 🔐 Seguridad (RLS)
+## 🔐 Security (RLS)
 
 ### Super Admins
-- Acceso completo a todas las tablas de payment
-- Pueden ver todos los datos de todas las organizaciones
+- Full access to all payment tables
+- Can view all data from all organizations
 
 ### Org Admins (Owners)
-- Solo pueden ver datos de sus propias organizaciones
-- Pueden ver:
-  - `payment_accounts` de su org
-  - `payment_subscriptions` de su org
-  - `payment_invoices` de su org
-- No pueden crear/editar (solo super admins)
+- Can only view data from their own organizations
+- Can view:
+  - `payment_accounts` of their org
+  - `payment_subscriptions` of their org
+  - `payment_invoices` of their org
+- Cannot create/edit (only super admins)
 
 ### Service Role
-- Puede insertar/actualizar para procesar webhooks
-- Usado por Edge Functions que procesan webhooks
+- Can insert/update for webhook processing
+- Used by Edge Functions that process webhooks
 
 ---
 
-## 📝 Normalización de Estados
+## 📝 Status Normalization
 
 ### Subscription Status
-- **Provider → Normalizado:**
+- **Provider → Normalized:**
   - `active`, `trialing` → `active`
   - `past_due`, `unpaid`, `payment_failed` → `past_due`
   - `canceled`, `cancelled`, `expired` → `canceled`
   - `incomplete`, `incomplete_expired` → `incomplete`
 
 ### Invoice Status
-- **Provider → Normalizado:**
+- **Provider → Normalized:**
   - `paid`, `succeeded` → `paid`
   - `open`, `pending`, `unpaid` → `open`
   - `void`, `voided` → `void`
@@ -363,17 +372,24 @@ Marca un evento como procesado.
 
 ---
 
-## 🚀 Próximos Pasos
+## 🚀 Next Steps
 
-1. **Implementar Payment Accounts** (alta prioridad)
-2. **Implementar Payment Subscriptions** (alta prioridad)
-3. **Implementar Payment Webhook Events** (alta prioridad)
-4. **Migrar Billing/Invoices a genérico** (alta prioridad)
-5. **Implementar Payment Products** (media prioridad)
-6. **Implementar Payment Prices** (media prioridad)
-7. **Agregar links entre secciones** (mejoras)
+1. **Implement Payment Accounts** (high priority)
+2. **Implement Payment Subscriptions** (high priority)
+3. **Implement Payment Webhook Events** (high priority)
+4. **Implement Payment Products** (medium priority)
+5. **Implement Payment Prices** (medium priority)
+6. **Add links between sections** (improvements)
 
 ---
 
-**Última actualización:** 2025-01-XX
-**Versión:** 1.0
+## 📚 Related Documentation
+
+- [Admin Pending Features](./ADMIN_PENDING_FEATURES.md) - Implementation roadmap
+- [Granular Authorization](./GRANULAR_AUTHORIZATION.md) - Authorization system
+- [Auth Request Optimization](./AUTH_REQUEST_OPTIMIZATION.md) - Performance optimization
+
+---
+
+**Last updated:** 2025-01-XX
+**Version:** 2.0

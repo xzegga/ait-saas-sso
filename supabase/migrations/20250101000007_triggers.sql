@@ -70,6 +70,8 @@ CREATE OR REPLACE FUNCTION public.validate_trial_dates()
 RETURNS trigger
 LANGUAGE plpgsql
 AS $$
+DECLARE
+  v_trial_days integer;
 BEGIN
   -- If status is 'trial', ensure trial dates are set
   IF NEW.status = 'trial' THEN
@@ -78,8 +80,19 @@ BEGIN
       NEW.trial_starts_at := now();
     END IF;
     
-    -- Note: trial_ends_at can be null for unlimited trials
-    -- It should be set explicitly when creating a trial subscription
+    -- Calculate trial_ends_at based on product's trial_days
+    IF NEW.trial_ends_at IS NULL THEN
+      -- Get trial_days from the product
+      SELECT trial_days INTO v_trial_days
+      FROM public.products
+      WHERE id = NEW.product_id;
+      
+      -- If product has trial_days configured, calculate trial_ends_at
+      IF v_trial_days IS NOT NULL AND v_trial_days > 0 THEN
+        NEW.trial_ends_at := NEW.trial_starts_at + (v_trial_days || ' days')::interval;
+      END IF;
+      -- If v_trial_days is NULL or 0, trial_ends_at remains NULL (unlimited trial)
+    END IF;
   END IF;
 
   -- If status is NOT 'trial', clear trial dates
@@ -99,4 +112,4 @@ CREATE TRIGGER validate_trial_dates_trigger
   FOR EACH ROW
   EXECUTE FUNCTION public.validate_trial_dates();
 
-COMMENT ON FUNCTION public.validate_trial_dates() IS 'Trigger function that automatically sets trial_starts_at when status is set to trial, and clears trial dates when status is changed from trial.';
+COMMENT ON FUNCTION public.validate_trial_dates() IS 'Trigger function that automatically sets trial_starts_at when status is set to trial, calculates trial_ends_at based on products.trial_days, and clears trial dates when status is changed from trial.';

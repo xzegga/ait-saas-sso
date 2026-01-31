@@ -62,6 +62,7 @@ GRANT EXECUTE ON FUNCTION public.is_subscription_active(uuid, uuid) TO authentic
 COMMENT ON FUNCTION public.is_subscription_active(uuid, uuid) IS 'Checks if a subscription is currently active and accessible. Returns true for active subscriptions and non-expired trials.';
 
 -- Function to expire trials that have passed their expiration date
+-- Updated to support payment emulation: converts trials to 'active' instead of 'past_due'
 CREATE OR REPLACE FUNCTION public.expire_trials()
 RETURNS TABLE(
   expired_count integer,
@@ -74,30 +75,59 @@ AS $$
 DECLARE
   v_expired_count integer;
   v_expired_subscriptions jsonb;
+  v_payment_emulated boolean := true; -- Set to false when real payment is integrated
 BEGIN
-  -- Update expired trials to 'past_due' status
-  WITH updated AS (
-    UPDATE public.org_product_subscriptions
-    SET 
-      status = 'past_due',
-      updated_at = now()
-    WHERE status = 'trial'
-      AND trial_ends_at IS NOT NULL
-      AND trial_ends_at < now()
-    RETURNING id, org_id, product_id, trial_ends_at
-  )
-  SELECT 
-    COUNT(*)::integer,
-    jsonb_agg(
-      jsonb_build_object(
-        'id', id,
-        'org_id', org_id,
-        'product_id', product_id,
-        'expired_at', trial_ends_at
-      )
+  IF v_payment_emulated THEN
+    -- Payment emulated: Auto-activate expired trials
+    WITH updated AS (
+      UPDATE public.org_product_subscriptions
+      SET 
+        status = 'active',
+        updated_at = now()
+      WHERE status = 'trial'
+        AND trial_ends_at IS NOT NULL
+        AND trial_ends_at < now()
+      RETURNING id, org_id, product_id, plan_id, trial_ends_at
     )
-  INTO v_expired_count, v_expired_subscriptions
-  FROM updated;
+    SELECT 
+      COUNT(*)::integer,
+      COALESCE(jsonb_agg(
+        jsonb_build_object(
+          'id', id,
+          'org_id', org_id,
+          'product_id', product_id,
+          'plan_id', plan_id,
+          'expired_at', trial_ends_at,
+          'activated_at', now()
+        )
+      ), '[]'::jsonb)
+    INTO v_expired_count, v_expired_subscriptions
+    FROM updated;
+  ELSE
+    -- Real payment: Mark as past_due (original behavior)
+    WITH updated AS (
+      UPDATE public.org_product_subscriptions
+      SET 
+        status = 'past_due',
+        updated_at = now()
+      WHERE status = 'trial'
+        AND trial_ends_at IS NOT NULL
+        AND trial_ends_at < now()
+      RETURNING id, org_id, product_id, trial_ends_at
+    )
+    SELECT 
+      COUNT(*)::integer,
+      COALESCE(jsonb_agg(
+        jsonb_build_object(
+          'id', id,
+          'org_id', org_id,
+          'product_id', product_id,
+          'expired_at', trial_ends_at
+        )
+      ), '[]'::jsonb)
+    INTO v_expired_count, v_expired_subscriptions
+    FROM updated;
+  END IF;
 
   RETURN QUERY SELECT 
     COALESCE(v_expired_count, 0),
@@ -108,4 +138,4 @@ $$;
 -- Grant execute permission (typically called by cron job or Edge Function)
 GRANT EXECUTE ON FUNCTION public.expire_trials() TO authenticated;
 
-COMMENT ON FUNCTION public.expire_trials() IS 'Expires trials that have passed their expiration date by changing status to past_due. Returns count and details of expired subscriptions. Should be called periodically (e.g., via cron job or Edge Function).';
+COMMENT ON FUNCTION public.expire_trials() IS 'Expires trials that have passed their expiration date. When payment_emulated=true, converts to active status. When false, converts to past_due. Returns count and details of expired subscriptions. Should be called periodically (e.g., via cron job or Edge Function).';

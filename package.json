@@ -11,7 +11,8 @@
     "clean": "pnpm -r exec -- rm -rf node_modules dist build .next out",
     "admin:dev": "pnpm --filter ./apps/ait-sso-admin dev",
     "admin:build": "pnpm --filter ./apps/ait-sso-admin build",
-    "admin:start": "pnpm --filter ./apps/ait-sso-admin start"
+    "admin:start": "pnpm --filter ./apps/ait-sso-admin start",
+    "update:idp-sdk": "cd ./packages/idp-sdk && pnpm build && yalc publish && cd ../../apps/example && rm -rf node_modules && rm -rf .yalc && pnpm install && yalc add @ait-saas-sso/idp-sdk && pnpm install"
   },
   "keywords": [
     "saas",

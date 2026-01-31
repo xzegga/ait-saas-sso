@@ -46,12 +46,11 @@ create trigger handle_updated_at_billing_intervals
   for each row
   execute function moddatetime(updated_at);
 
--- Insert default billing intervals
+-- Insert default billing intervals (only month and year)
 insert into public.billing_intervals (key, label, description, days, sort_order, is_active) values
-  ('day', 'Daily', 'Billed daily', 1, 1, true),
-  ('week', 'Weekly', 'Billed weekly', 7, 2, true),
-  ('month', 'Monthly', 'Billed monthly', 30, 3, true),
-  ('year', 'Yearly', 'Billed yearly', 365, 4, true);
+  ('month', 'Monthly', 'Billed monthly', 30, 1, true),
+  ('year', 'Yearly', 'Billed yearly', 365, 2, true)
+  on conflict (key) do nothing;
 
 -- Update product_plan_prices to reference billing_intervals
 -- First, add a foreign key constraint (if the table exists)

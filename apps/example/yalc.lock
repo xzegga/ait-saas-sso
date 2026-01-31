@@ -1,0 +1,9 @@
+{
+  "version": "v1",
+  "packages": {
+    "@ait-saas-sso/idp-sdk": {
+      "signature": "a1b61bf9b6fed2dec61b997fcdbe3196",
+      "file": true
+    }
+  }
+}

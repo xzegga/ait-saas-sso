@@ -1,255 +1,244 @@
-# Plan de Trabajo - Funcionalidades Pendientes del Admin Panel
+# Work Plan - Pending Admin Panel Features
 
-Este documento detalla todas las funcionalidades que faltan implementar en el panel de administración, priorizadas y organizadas por categorías.
-
----
-
-## 📊 Estado Actual
-
-### ✅ Implementado (12 páginas)
-1. **Dashboard** - Estadísticas generales
-2. **Products** - CRUD completo con gestión de planes y roles
-3. **Plans & Entitlements** - Gestión de planes y entitlements globales
-4. **Product Plans** - Gestión de relaciones producto-plan con precios ⭐ (Recién completado)
-5. **Organizations** - Listado y gestión
-6. **Organization Members** - Gestión de miembros por organización
-7. **Member Product Roles** - Asignación de roles por producto
-8. **Subscriptions** - Listado, creación y edición
-9. **Users/Profiles** - Listado y detalle
-10. **Super Admins** - Gestión de whitelist
-11. **Recycle Bin** - Gestión de elementos eliminados
-12. **Billing/Invoices** - Facturas (usa `useStripeInvoices`, necesita migración)
-13. **Payment Providers** - CRUD de proveedores de pago
+This document details all pending features to be implemented in the admin panel, prioritized and organized by categories.
 
 ---
 
-## 🚨 Alta Prioridad
+## 📊 Current Status
+
+### ✅ Implemented (13 pages)
+1. **Dashboard** - General statistics
+2. **Products** - Full CRUD with plan and role management
+3. **Plans & Entitlements** - Global plans and entitlements management
+4. **Billing Intervals** - Dynamic billing interval configuration (month, year, and custom intervals)
+5. **Organizations** - Listing and management
+6. **Organization Members** - Member management per organization
+7. **Member Product Roles** - Role assignment per product
+8. **Subscriptions** - Listing, creation, and editing
+9. **Users/Profiles** - Listing and details
+10. **Super Admins** - Whitelist management
+11. **Recycle Bin** - Deleted items management
+12. **Billing/Invoices** - Invoices (migrated to generic `usePaymentInvoices`)
+13. **Payment Providers** - Payment providers CRUD
+
+---
+
+## 🚨 High Priority
 
 ### 1. Payment Accounts (`payment_accounts`)
-**Propósito:** Ver y gestionar cuentas de pago por organización
+**Purpose:** View and manage payment accounts per organization
 
-**Funcionalidad requerida:**
-- [ ] Listar todas las cuentas de pago
-- [ ] Filtrar por organización
-- [ ] Filtrar por provider
-- [ ] Ver detalles de cuenta (external_account_id, metadata, status)
-- [ ] Crear/editar cuentas (asociar org con provider account)
-- [ ] Ver historial de pagos por cuenta
-- [ ] Ver suscripciones asociadas a la cuenta
+**Required functionality:**
+- [ ] List all payment accounts
+- [ ] Filter by organization
+- [ ] Filter by provider
+- [ ] View account details (external_account_id, metadata, status)
+- [ ] Create/edit accounts (associate org with provider account)
+- [ ] View payment history per account
+- [ ] View subscriptions associated with the account
 
-**Archivos a crear:**
+**Files to create:**
 - `apps/ait-sso-admin/src/hooks/usePaymentAccounts.ts`
 - `apps/ait-sso-admin/src/pages/payment-accounts/list.tsx`
 - `apps/ait-sso-admin/src/components/payment-accounts/*`
 
-**Estimación:** 4-6 horas
+**Estimation:** 4-6 hours
 
 ---
 
 ### 2. Payment Subscriptions (`payment_subscriptions`)
-**Propósito:** Ver suscripciones sincronizadas con providers de pago
+**Purpose:** View subscriptions synchronized with payment providers
 
-**Funcionalidad requerida:**
-- [ ] Listar todas las suscripciones de pago
-- [ ] Filtrar por organización
-- [ ] Filtrar por provider
-- [ ] Filtrar por estado (active, trial, past_due, canceled)
-- [ ] Ver estado normalizado vs provider_status
-- [ ] Ver períodos de facturación (current_period_start, current_period_end)
-- [ ] Ver si está programada para cancelar (cancel_at_period_end)
-- [ ] Link a suscripción interna (`org_product_subscriptions`)
-- [ ] Sincronizar manualmente si es necesario
+**Required functionality:**
+- [ ] List all payment subscriptions
+- [ ] Filter by organization
+- [ ] Filter by provider
+- [ ] Filter by status (active, trial, past_due, canceled)
+- [ ] View normalized status vs provider_status
+- [ ] View billing periods (current_period_start, current_period_end)
+- [ ] View if scheduled to cancel (cancel_at_period_end)
+- [ ] Link to internal subscription (`org_product_subscriptions`)
+- [ ] Manually synchronize if needed
 
-**Archivos a crear:**
+**Files to create:**
 - `apps/ait-sso-admin/src/hooks/usePaymentSubscriptions.ts`
 - `apps/ait-sso-admin/src/pages/payment-subscriptions/list.tsx`
 - `apps/ait-sso-admin/src/components/payment-subscriptions/*`
 
-**Estimación:** 5-7 horas
+**Estimation:** 5-7 hours
 
 ---
 
 ### 3. Payment Webhook Events (`payment_webhook_events`)
-**Propósito:** Debugging y monitoreo de webhooks de payment providers
+**Purpose:** Debugging and monitoring of payment provider webhooks
 
-**Funcionalidad requerida:**
-- [ ] Listar todos los eventos recibidos
-- [ ] Filtrar por provider
-- [ ] Filtrar por tipo de evento (event_type)
-- [ ] Filtrar por estado (processed/unprocessed)
-- [ ] Ver payload completo del evento
-- [ ] Ver error_message si el procesamiento falló
-- [ ] Re-procesar eventos fallidos manualmente
-- [ ] Estadísticas de eventos (total, processed, failed)
-- [ ] Búsqueda por external_event_id
+**Required functionality:**
+- [ ] List all received events
+- [ ] Filter by provider
+- [ ] Filter by event type (event_type)
+- [ ] Filter by status (processed/unprocessed)
+- [ ] View complete event payload
+- [ ] View error_message if processing failed
+- [ ] Manually re-process failed events
+- [ ] Event statistics (total, processed, failed)
+- [ ] Search by external_event_id
 
-**Archivos a crear:**
+**Files to create:**
 - `apps/ait-sso-admin/src/hooks/usePaymentWebhookEvents.ts`
 - `apps/ait-sso-admin/src/pages/payment-webhook-events/list.tsx`
 - `apps/ait-sso-admin/src/components/payment-webhook-events/*`
 
-**Estimación:** 6-8 horas
+**Estimation:** 6-8 hours
 
 ---
 
-### 4. Migrar Billing/Invoices a Sistema Genérico
-**Propósito:** Soportar múltiples payment providers en lugar de solo Stripe
+## 📋 Medium Priority
 
-**Cambios requeridos:**
-- [ ] Crear hook `usePaymentInvoices` genérico (reemplazar `useStripeInvoices`)
-- [ ] Actualizar `apps/ait-sso-admin/src/pages/billing/invoices.tsx`
-- [ ] Agregar filtro por provider
-- [ ] Mostrar provider en la tabla
-- [ ] Agregar links para descargar PDFs
-- [ ] Agregar links a hosted invoice URLs
-- [ ] Mantener compatibilidad con datos existentes
+### 4. Payment Products (`payment_products`)
+**Purpose:** Map internal products to provider products
 
-**Archivos a modificar:**
-- `apps/ait-sso-admin/src/hooks/useStripeInvoices.ts` → `usePaymentInvoices.ts`
-- `apps/ait-sso-admin/src/pages/billing/invoices.tsx`
-- `apps/ait-sso-admin/src/components/billing/*`
+**Required functionality:**
+- [ ] List all product → provider product mappings
+- [ ] Filter by internal product
+- [ ] Filter by provider
+- [ ] Create/edit mappings
+- [ ] View which products are synchronized with which providers
+- [ ] View provider metadata
 
-**Estimación:** 3-4 horas
-
----
-
-## 📋 Media Prioridad
-
-### 5. Payment Products (`payment_products`)
-**Propósito:** Mapear productos internos a productos del provider
-
-**Funcionalidad requerida:**
-- [ ] Listar todos los mapeos producto → provider product
-- [ ] Filtrar por producto interno
-- [ ] Filtrar por provider
-- [ ] Crear/editar mapeos
-- [ ] Ver qué productos están sincronizados con qué providers
-- [ ] Ver metadata del provider
-
-**Archivos a crear:**
+**Files to create:**
 - `apps/ait-sso-admin/src/hooks/usePaymentProducts.ts`
 - `apps/ait-sso-admin/src/pages/payment-products/list.tsx`
 - `apps/ait-sso-admin/src/components/payment-products/*`
 
-**Estimación:** 3-4 horas
+**Estimation:** 3-4 hours
 
 ---
 
-### 6. Payment Prices (`payment_prices`)
-**Propósito:** Mapear planes a precios del provider
+### 5. Payment Prices (`payment_prices`)
+**Purpose:** Map plans to provider prices
 
-**Funcionalidad requerida:**
-- [ ] Listar todos los mapeos plan → provider price
-- [ ] Filtrar por producto-plan interno
-- [ ] Filtrar por provider
-- [ ] Crear/editar mapeos
-- [ ] Ver precios por provider y plan
-- [ ] Ver billing_interval (month, year, day, week)
-- [ ] Ver amount en cents y currency
+**Required functionality:**
+- [ ] List all plan → provider price mappings
+- [ ] Filter by internal product-plan
+- [ ] Filter by provider
+- [ ] Create/edit mappings
+- [ ] View prices per provider and plan
+- [ ] View billing_interval (references dynamic billing_intervals table)
+- [ ] View amount in cents and currency
 
-**Archivos a crear:**
+**Files to create:**
 - `apps/ait-sso-admin/src/hooks/usePaymentPrices.ts`
 - `apps/ait-sso-admin/src/pages/payment-prices/list.tsx`
 - `apps/ait-sso-admin/src/components/payment-prices/*`
 
-**Estimación:** 3-4 horas
+**Estimation:** 3-4 hours
 
 ---
 
-### 7. Role Templates (`role_templates`)
-**Propósito:** Templates reutilizables de roles para productos
+### 6. Role Templates (`role_templates`)
+**Purpose:** Reusable role templates for products
 
-**Estado:** Hook existe (`useRoleTemplates`), falta la página
+**Status:** Hook exists (`useRoleTemplates`), page is missing
 
-**Funcionalidad requerida:**
-- [ ] Listar todos los templates
-- [ ] Crear/editar/eliminar templates
-- [ ] Ver roles incluidos en cada template
-- [ ] Aplicar template a un producto
-- [ ] Previsualizar qué roles se crearán
+**Required functionality:**
+- [ ] List all templates
+- [ ] Create/edit/delete templates
+- [ ] View roles included in each template
+- [ ] Apply template to a product
+- [ ] Preview which roles will be created
 
-**Archivos a crear:**
+**Files to create:**
 - `apps/ait-sso-admin/src/pages/role-templates/list.tsx`
 - `apps/ait-sso-admin/src/components/role-templates/*`
 
-**Estimación:** 3-4 horas
+**Estimation:** 3-4 hours
 
 ---
 
-## 🔧 Mejoras en Páginas Existentes
+## 🔧 Improvements to Existing Pages
 
-### 8. Mejoras en Subscriptions
-**Funcionalidad adicional:**
-- [ ] Ver suscripción de pago asociada (link a `payment_subscriptions`)
-- [ ] Ver historial de cambios de estado
-- [ ] Ver invoices relacionados
-- [ ] Ver payment account asociada
+### 7. Subscriptions Improvements
+**Additional functionality:**
+- [ ] View associated payment subscription (link to `payment_subscriptions`)
+- [ ] View status change history
+- [ ] View related invoices
+- [ ] View associated payment account
 
-**Archivos a modificar:**
+**Files to modify:**
 - `apps/ait-sso-admin/src/pages/subscriptions/list.tsx`
 - `apps/ait-sso-admin/src/components/subscriptions/*`
 
-**Estimación:** 2-3 horas
+**Estimation:** 2-3 hours
 
 ---
 
-### 9. Mejoras en Organizations
-**Funcionalidad adicional:**
-- [ ] Ver cuenta de pago asociada (link a `payment_accounts`)
-- [ ] Ver suscripciones de pago activas
-- [ ] Ver historial de facturación
-- [ ] Ver total gastado por organización
+### 8. Organizations Improvements
+**Additional functionality:**
+- [ ] View associated payment account (link to `payment_accounts`)
+- [ ] View active payment subscriptions
+- [ ] View billing history
+- [ ] View total spent per organization
 
-**Archivos a modificar:**
+**Files to modify:**
 - `apps/ait-sso-admin/src/pages/organizations/list.tsx`
 - `apps/ait-sso-admin/src/components/organizations/*`
 
-**Estimación:** 2-3 horas
+**Estimation:** 2-3 hours
 
 ---
 
-## 📝 Notas de Implementación
+## 📝 Implementation Notes
 
-### Patrones a seguir:
-1. **Hooks:** Usar el mismo patrón que `usePaymentProviders` para consistencia
-2. **Componentes:** Reutilizar componentes de `payment-providers` como base
-3. **Filtros:** Implementar filtros por organización, provider, estado
-4. **Tablas:** Mostrar información clave con links a entidades relacionadas
-5. **Forms:** Usar Sheets para crear/editar, similar a otras páginas
+### Patterns to follow:
+1. **Hooks:** Use the same pattern as `usePaymentProviders` for consistency
+2. **Components:** Reuse components from `payment-providers` as base
+3. **Filters:** Implement filters by organization, provider, status
+4. **Tables:** Display key information with links to related entities
+5. **Forms:** Use Sheets for create/edit, similar to other pages
+6. **Authorization:** Use `<CanAccess>` and granular `useCan` hooks (see [Granular Authorization](./GRANULAR_AUTHORIZATION.md))
 
-### Consideraciones técnicas:
-- Todas las tablas de payment tienen RLS habilitado
-- Super admins tienen acceso completo
-- Org admins solo ven datos de sus organizaciones
-- Service role puede insertar/actualizar para webhooks
+### Technical considerations:
+- All payment tables have RLS enabled
+- Super admins have full access
+- Org admins only see data from their organizations
+- Service role can insert/update for webhooks
+- Authorization uses granular permissions (view, create, edit, delete)
 
-### Orden sugerido de implementación:
-1. Payment Accounts (base para todo lo demás)
-2. Payment Subscriptions (más usado)
-3. Payment Webhook Events (debugging crítico)
-4. Migrar Billing/Invoices (mejora existente)
-5. Payment Products y Prices (completar mapeos)
-6. Role Templates (funcionalidad independiente)
-7. Mejoras en páginas existentes (polish final)
-
----
-
-## 📊 Resumen de Estimación
-
-| Prioridad | Funcionalidad | Estimación |
-|-----------|--------------|------------|
-| Alta | Payment Accounts | 4-6 horas |
-| Alta | Payment Subscriptions | 5-7 horas |
-| Alta | Payment Webhook Events | 6-8 horas |
-| Alta | Migrar Billing/Invoices | 3-4 horas |
-| Media | Payment Products | 3-4 horas |
-| Media | Payment Prices | 3-4 horas |
-| Media | Role Templates | 3-4 horas |
-| Baja | Mejoras Subscriptions | 2-3 horas |
-| Baja | Mejoras Organizations | 2-3 horas |
-| **TOTAL** | | **31-43 horas** |
+### Suggested implementation order:
+1. Payment Accounts (base for everything else)
+2. Payment Subscriptions (most used)
+3. Payment Webhook Events (critical debugging)
+4. Payment Products and Prices (complete mappings)
+5. Role Templates (independent functionality)
+6. Improvements to existing pages (final polish)
 
 ---
 
-**Última actualización:** 2025-01-XX
-**Estado:** En progreso - Product Plans completado ✅
+## 📊 Estimation Summary
+
+| Priority | Feature | Estimation |
+|----------|---------|------------|
+| High | Payment Accounts | 4-6 hours |
+| High | Payment Subscriptions | 5-7 hours |
+| High | Payment Webhook Events | 6-8 hours |
+| Medium | Payment Products | 3-4 hours |
+| Medium | Payment Prices | 3-4 hours |
+| Medium | Role Templates | 3-4 hours |
+| Low | Subscriptions Improvements | 2-3 hours |
+| Low | Organizations Improvements | 2-3 hours |
+| **TOTAL** | | **29-40 hours** |
+
+---
+
+## ✅ Recently Completed
+
+- **Billing Intervals**: Dynamic billing interval management (month, year, and custom intervals)
+- **Product Plans**: Integrated into Products section (not a separate page)
+- **Payment Invoices**: Migrated to generic system (`usePaymentInvoices`)
+- **Authorization System**: Implemented granular authorization with `<CanAccess>` and `useCan`
+- **Auth Optimization**: Implemented request deduplication to prevent duplicate API calls
+
+---
+
+**Last updated:** 2025-01-XX
+**Status:** In progress - Billing Intervals and Authorization System completed ✅

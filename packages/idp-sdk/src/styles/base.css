@@ -1,0 +1,108 @@
+/**
+ * Base styles for IDP SDK components
+ * Legacy styles for backward compatibility
+ * New components should use Tailwind classes with idp- prefix
+ */
+
+.idp-button {
+  padding: 0.5rem 1rem;
+  border-radius: var(--idp-radius);
+  border: none;
+  cursor: pointer;
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.idp-button-primary {
+  background-color: var(--idp-primary);
+  color: white;
+}
+
+.idp-button-primary:hover:not(:disabled) {
+  background-color: var(--idp-primary-hover);
+}
+
+.idp-button-secondary {
+  background-color: var(--idp-secondary);
+  color: white;
+}
+
+.idp-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.idp-input,
+.idp-select {
+  width: 100%;
+  padding: 0.5rem;
+  border: 1px solid var(--idp-border);
+  border-radius: var(--idp-radius);
+  font-size: 0.875rem;
+}
+
+.idp-input:disabled,
+.idp-select:disabled {
+  background-color: var(--idp-bg-secondary);
+  cursor: not-allowed;
+}
+
+.idp-label {
+  display: block;
+  margin-bottom: 0.25rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--idp-text);
+}
+
+.idp-form-group {
+  margin-bottom: var(--idp-spacing);
+}
+
+.idp-error-message {
+  padding: 0.75rem;
+  background-color: #fef2f2;
+  color: var(--idp-error);
+  border-radius: var(--idp-radius);
+  font-size: 0.875rem;
+  margin-bottom: var(--idp-spacing);
+}
+
+.idp-config-error {
+  background-color: #fff3cd;
+  border: 1px solid #ffc107;
+  color: #856404;
+  margin-bottom: 1.5rem;
+  padding: 1rem;
+}
+
+.idp-config-error strong {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-size: 1rem;
+  color: #856404;
+}
+
+.idp-config-error p {
+  margin: 0.25rem 0;
+  font-size: 0.875rem;
+}
+
+.idp-error-hint {
+  font-size: 0.75rem !important;
+  color: #6c5a00 !important;
+  margin-top: 0.5rem !important;
+}
+
+.idp-loading {
+  padding: var(--idp-spacing);
+  text-align: center;
+  color: var(--idp-text-muted);
+}
+
+.idp-empty-state {
+  padding: var(--idp-spacing);
+  text-align: center;
+  color: var(--idp-text-muted);
+}

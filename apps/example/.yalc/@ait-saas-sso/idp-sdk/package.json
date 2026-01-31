@@ -1,0 +1,86 @@
+{
+  "name": "@ait-saas-sso/idp-sdk",
+  "version": "0.1.0",
+  "description": "IDP SDK for React applications - Authentication, User Management, Organization Management, and Billing",
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./style.css": "./dist/style.css",
+    "./auth": {
+      "import": "./dist/auth/index.js",
+      "types": "./dist/auth/index.d.ts"
+    },
+    "./profile": {
+      "import": "./dist/profile/index.js",
+      "types": "./dist/profile/index.d.ts"
+    },
+    "./organization": {
+      "import": "./dist/organization/index.js",
+      "types": "./dist/organization/index.d.ts"
+    },
+    "./billing": {
+      "import": "./dist/billing/index.js",
+      "types": "./dist/billing/index.d.ts"
+    },
+    "./permissions": {
+      "import": "./dist/permissions/index.js",
+      "types": "./dist/permissions/index.d.ts"
+    },
+    "./shared": {
+      "import": "./dist/shared/index.js",
+      "types": "./dist/shared/index.d.ts"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "dev": "vite build --watch",
+    "build": "tsc && vite build",
+    "type-check": "tsc --noEmit",
+    "lint": "eslint src --ext ts,tsx",
+    "clean": "rm -rf dist",
+    "yalc:publish": "yalc publish",
+    "yalc:push": "pnpm build && yalc push"
+  },
+  "keywords": [
+    "idp",
+    "sso",
+    "authentication",
+    "react",
+    "sdk",
+    "supabase"
+  ],
+  "author": "",
+  "license": "ISC",
+  "peerDependencies": {
+    "react": "^18.0.0 || ^19.0.0",
+    "react-dom": "^18.0.0 || ^19.0.0"
+  },
+  "dependencies": {
+    "@radix-ui/react-alert-dialog": "^1.0.5",
+    "@radix-ui/react-dialog": "^1.0.5",
+    "@radix-ui/react-dropdown-menu": "^2.0.6",
+    "@radix-ui/react-label": "^2.0.2",
+    "@radix-ui/react-select": "^2.0.0",
+    "@radix-ui/react-slot": "^1.0.2",
+    "@radix-ui/react-tabs": "^1.0.4",
+    "@radix-ui/react-toggle-group": "^1.1.7",
+    "@supabase/supabase-js": "^2.90.1",
+    "autoprefixer": "^10.4.17",
+    "class-variance-authority": "^0.7.0",
+    "clsx": "^2.1.0",
+    "lucide-react": "^0.344.0",
+    "postcss": "^8.4.33",
+    "tailwind-merge": "^2.2.1",
+    "tailwindcss": "^3.4.19",
+    "tailwindcss-animate": "^1.0.7"
+  },
+  "yalcSig": "a1b61bf9b6fed2dec61b997fcdbe3196"
+}

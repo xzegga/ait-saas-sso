@@ -1,0 +1,7 @@
+/**
+ * Main styles entry point
+ * Includes Tailwind CSS and custom SDK styles
+ */
+
+@import './globals.css';
+@import './base.css';

@@ -1,0 +1,66 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --idp-background: 0 0% 100%;
+    --idp-foreground: 222.2 84% 4.9%;
+    --idp-card: 0 0% 100%;
+    --idp-card-foreground: 222.2 84% 4.9%;
+    --idp-popover: 0 0% 100%;
+    --idp-popover-foreground: 222.2 84% 4.9%;
+    --idp-primary: 221.2 83.2% 53.3%;
+    --idp-primary-foreground: 210 40% 98%;
+    --idp-secondary: 210 40% 96.1%;
+    --idp-secondary-foreground: 222.2 47.4% 11.2%;
+    --idp-muted: 210 40% 96.1%;
+    --idp-muted-foreground: 215.4 16.3% 46.9%;
+    --idp-accent: 210 40% 96.1%;
+    --idp-accent-foreground: 222.2 47.4% 11.2%;
+    --idp-destructive: 0 84.2% 60.2%;
+    --idp-destructive-foreground: 210 40% 98%;
+    --idp-border: 214.3 31.8% 91.4%;
+    --idp-input: 214.3 31.8% 91.4%;
+    --idp-ring: 221.2 83.2% 53.3%;
+    --idp-radius: 0.5rem;
+  }
+
+  .dark {
+    --idp-background: 222.2 84% 4.9%;
+    --idp-foreground: 210 40% 98%;
+    --idp-card: 222.2 84% 4.9%;
+    --idp-card-foreground: 210 40% 98%;
+    --idp-popover: 222.2 84% 4.9%;
+    --idp-popover-foreground: 210 40% 98%;
+    --idp-primary: 217.2 91.2% 59.8%;
+    --idp-primary-foreground: 222.2 47.4% 11.2%;
+    --idp-secondary: 217.2 32.6% 17.5%;
+    --idp-secondary-foreground: 210 40% 98%;
+    --idp-muted: 217.2 32.6% 17.5%;
+    --idp-muted-foreground: 215 20.2% 65.1%;
+    --idp-accent: 217.2 32.6% 17.5%;
+    --idp-accent-foreground: 210 40% 98%;
+    --idp-destructive: 0 62.8% 30.6%;
+    --idp-destructive-foreground: 210 40% 98%;
+    --idp-border: 217.2 32.6% 17.5%;
+    --idp-input: 217.2 32.6% 17.5%;
+    --idp-ring: 224.3 76.3% 94.9%;
+  }
+}
+
+@layer base {
+  * {
+    border-color: hsl(var(--idp-border));
+  }
+  body {
+    background-color: hsl(var(--idp-background));
+    color: hsl(var(--idp-foreground));
+  }
+}
+
+/* Allow consumers to override styles */
+.idp-sdk {
+  /* All SDK styles are scoped with idp- prefix */
+  /* Consumers can override by using more specific selectors or !important */
+}
