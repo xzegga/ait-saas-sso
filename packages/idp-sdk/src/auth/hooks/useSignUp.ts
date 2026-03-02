@@ -1,5 +1,7 @@
 /**
- * Hook for user signup with organization creation
+ * Hook for user signup (creates user only, no org/subscription)
+ * Uses OTP-based email verification flow
+ * After verification, use useCompleteSignup to create org/subscription
  */
 
 import { useState, useCallback } from 'react';
@@ -11,21 +13,17 @@ import { isValidEmail } from '../../shared/utils';
 export interface SignUpParams {
   email: string;
   password: string;
+  confirmPassword: string;
   fullName: string;
-  productId: string;
-  planId: string;
-  billingInterval?: string; // Billing interval key (e.g., 'month', 'year')
   orgName?: string;
   useUserName: boolean;
 }
 
 export interface SignUpResult {
   userId: string;
-  orgId: string;
-  subscriptionId: string;
-  status: 'trial' | 'active';
-  trialDays?: number;
-  trialEndsAt?: string;
+  email: string;
+  // Note: User is not yet verified, so we don't return orgId/subscriptionId yet
+  // These will be available after OTP verification and plan selection
 }
 
 export interface UseSignUpReturn {
@@ -35,7 +33,7 @@ export interface UseSignUpReturn {
 }
 
 export const useSignUp = (): UseSignUpReturn => {
-  const { supabase, config } = useIDP();
+  const { supabase } = useIDP();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
 
@@ -55,35 +53,36 @@ export const useSignUp = (): UseSignUpReturn => {
           throw new ValidationError('Password must be at least 6 characters');
         }
 
+        // Validate password confirmation
+        if (params.password !== params.confirmPassword) {
+          throw new ValidationError('Passwords do not match');
+        }
+
         // Validate full name
         if (!params.fullName || params.fullName.trim().length === 0) {
           throw new ValidationError('Full name is required');
         }
 
-        // Validate product ID
-        if (!params.productId) {
-          throw new ValidationError('Product ID is required');
-        }
+        logger.debug('Attempting signup', { email: params.email });
 
-        // Validate plan ID
-        if (!params.planId) {
-          throw new ValidationError('Plan ID is required');
-        }
-
-        logger.debug('Attempting signup', { email: params.email, productId: params.productId });
-
-        // 1. Create user in Supabase Auth
+        // Create user in Supabase Auth with OTP
+        // Supabase will automatically send OTP email when signUp is called (if SMTP is enabled)
+        const siteUrl = typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000';
         const { data: authData, error: authError } = await supabase.auth.signUp({
           email: params.email,
           password: params.password,
           options: {
             data: {
               full_name: params.fullName,
+              org_name: params.orgName,
+              use_user_name: params.useUserName,
             },
+            emailRedirectTo: `${siteUrl}/auth/callback`,
           },
         });
 
         if (authError) {
+          logger.error('Auth signup error', authError);
           throw new AuthenticationError(authError.message);
         }
 
@@ -96,44 +95,12 @@ export const useSignUp = (): UseSignUpReturn => {
         // Wait a bit for the trigger to create the profile
         await new Promise((resolve) => setTimeout(resolve, 500));
 
-        // 2. Call the complete signup function
-        const { data: signupData, error: signupError } = await supabase.rpc(
-          'fn_complete_user_signup',
-          {
-            p_user_id: authData.user.id,
-            p_product_id: params.productId,
-            p_plan_id: params.planId,
-            p_billing_interval: params.billingInterval || 'month',
-            p_org_name: params.orgName || null,
-            p_use_user_name: params.useUserName,
-          }
-        );
-
-        if (signupError) {
-          logger.error('Signup RPC error', signupError);
-          throw new AuthenticationError(signupError.message || 'Signup failed');
-        }
-
-        if (!signupData?.success) {
-          const errorMsg = signupData?.error || 'Signup failed';
-          logger.error('Signup failed', { error: errorMsg, data: signupData });
-          throw new AuthenticationError(errorMsg);
-        }
-
-        logger.info('Signup completed successfully', {
-          userId: authData.user.id,
-          orgId: signupData.org_id,
-          subscriptionId: signupData.subscription_id,
-          status: signupData.status,
-        });
+        // Note: We don't create org/subscription here
+        // That will be done after email verification using useCompleteSignup
 
         return {
           userId: authData.user.id,
-          orgId: signupData.org_id,
-          subscriptionId: signupData.subscription_id,
-          status: signupData.status,
-          trialDays: signupData.trial_days,
-          trialEndsAt: signupData.trial_ends_at,
+          email: params.email,
         };
       } catch (err: any) {
         logger.error('Signup error', err);

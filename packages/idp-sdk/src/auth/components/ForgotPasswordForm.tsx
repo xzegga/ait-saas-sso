@@ -1,13 +1,29 @@
 /**
- * Forgot Password Form Component (modular, no page wrapper)
+ * Forgot Password Form Component
+ * Handles password reset with OTP verification flow
  */
 
 import React, { useState, FormEvent } from 'react';
 import { useForgotPassword } from '../hooks/useForgotPassword';
+import { VerificationRequired } from './VerificationRequired';
 import { logger } from '../../shared/logger';
+import { Button } from '../../components/ui/button';
+import { Input } from '../../components/ui/input';
+import { Label } from '../../components/ui/label';
+import { Alert, AlertDescription } from '../../components/ui/alert';
+import { AlertCircle } from 'lucide-react';
+
+// Icon component to avoid React type conflicts between React 18 and 19
+const Icon: React.FC<{ icon: typeof AlertCircle; className?: string }> = ({ 
+  icon: IconComponent, 
+  className 
+}) => {
+  const Component = IconComponent as any;
+  return <Component className={className} />;
+};
 
 export interface ForgotPasswordFormProps {
-  onSuccess?: () => void;
+  onSuccess?: (email: string) => void; // Called when OTP is sent, passes email for next step
   onError?: (error: Error) => void;
   className?: string;
 }
@@ -16,67 +32,84 @@ export const ForgotPasswordForm: React.FC<ForgotPasswordFormProps> = ({
   onSuccess,
   onError,
   className = '',
-}: ForgotPasswordFormProps) => {
-  const { sendResetEmail, loading, error, success } = useForgotPassword();
+}) => {
+  const { sendResetEmail, resendCode, loading, error, success } = useForgotPassword();
   const [email, setEmail] = useState('');
+  const [showVerification, setShowVerification] = useState(false);
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     
     try {
       await sendResetEmail(email);
-      logger.info('Password reset email sent successfully');
-      onSuccess?.();
+      logger.info('Password reset OTP sent successfully');
+      setShowVerification(true);
+      onSuccess?.(email);
     } catch (err: any) {
       logger.error('Forgot password form error', err);
       onError?.(err);
     }
   };
 
-  if (success) {
+  // Show verification step if OTP was sent
+  if (showVerification && success) {
     return (
-      <div className={`idp-forgot-password-success ${className}`}>
-        <p className="idp-success-message">
-          Password reset email sent! Please check your inbox.
-        </p>
+      <div className={`space-y-6 ${className}`}>
+        <VerificationRequired
+          email={email}
+          onVerify={async (code: string) => {
+            // Verification is handled by parent component (ResetPasswordPage)
+            // This component just shows the verification UI
+            throw new Error('Verification should be handled by parent component');
+          }}
+          onResend={async () => {
+            try {
+              await resendCode(email);
+            } catch (err) {
+              logger.error('Resend error', err);
+              throw err;
+            }
+          }}
+          type="password_reset"
+          loading={loading}
+          error={error?.message || null}
+        />
       </div>
     );
   }
 
   return (
-    <form onSubmit={handleSubmit} className={`idp-forgot-password-form ${className}`}>
-      <div className="idp-form-group">
-        <label htmlFor="email" className="idp-label">
-          Email
-        </label>
-        <input
+    <form onSubmit={handleSubmit} className={`space-y-4 ${className}`}>
+      <div className="space-y-2">
+        <Label htmlFor="email">Email</Label>
+        <Input
           id="email"
           type="email"
           value={email}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEmail(e.target.value)}
+          onChange={(e) => setEmail(e.target.value)}
           required
           disabled={loading}
-          className="idp-input"
           placeholder="Enter your email"
         />
-        <p className="idp-help-text">
-          We'll send you a link to reset your password.
+        <p className="text-xs text-muted-foreground">
+          We'll send you a verification code to reset your password.
         </p>
       </div>
 
       {error && (
-        <div className="idp-error-message" role="alert">
-          {error.message}
-        </div>
+        <Alert variant="destructive">
+          <Icon icon={AlertCircle} className="h-4 w-4" />
+          <AlertDescription>{error.message}</AlertDescription>
+        </Alert>
       )}
 
-      <button
+      <Button
         type="submit"
         disabled={loading}
-        className="idp-button idp-button-primary"
+        className="w-full"
       >
         {loading ? 'Sending...' : 'Send Reset Link'}
-      </button>
+      </Button>
     </form>
   );
 };

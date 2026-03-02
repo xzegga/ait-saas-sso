@@ -19,11 +19,20 @@ export interface UserUpdate {
   role?: string;
 }
 
+/** Address type for organization_addresses (matches DB constraint) */
+export type OrganizationAddressType = 'billing' | 'shipping' | 'legal' | 'headquarters';
+
 export interface Organization {
   id: string;
   name: string;
   billing_email: string | null;
   mfa_policy: string;
+  slug: string | null;
+  legal_name: string | null;
+  tax_id: string | null;
+  status: string;
+  support_email: string | null;
+  phone: string | null;
   created_at: string;
   updated_at: string;
   deleted_at: string | null;
@@ -33,13 +42,56 @@ export interface OrganizationCreate {
   name: string;
   billing_email?: string | null;
   mfa_policy?: string;
+  slug?: string | null;
+  legal_name?: string | null;
+  tax_id?: string | null;
+  support_email?: string | null;
+  phone?: string | null;
 }
 
 export interface OrganizationUpdate {
   name?: string;
   billing_email?: string | null;
   mfa_policy?: string;
+  slug?: string | null;
+  legal_name?: string | null;
+  tax_id?: string | null;
+  support_email?: string | null;
+  phone?: string | null;
   deleted_at?: string | null;
+}
+
+export interface OrganizationAddress {
+  id: string;
+  org_id: string;
+  address_type: OrganizationAddressType;
+  line1: string | null;
+  line2: string | null;
+  city: string | null;
+  state_region: string | null;
+  postal_code: string | null;
+  country_code: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface OrganizationAddressCreate {
+  address_type: OrganizationAddressType;
+  line1?: string | null;
+  line2?: string | null;
+  city?: string | null;
+  state_region?: string | null;
+  postal_code?: string | null;
+  country_code?: string | null;
+}
+
+export interface OrganizationAddressUpdate {
+  line1?: string | null;
+  line2?: string | null;
+  city?: string | null;
+  state_region?: string | null;
+  postal_code?: string | null;
+  country_code?: string | null;
 }
 
 export interface OrganizationMember {
@@ -61,6 +113,7 @@ export interface Product {
   client_id: string | null;
   client_secret: string | null;
   redirect_urls: string[] | null;
+  origin_urls: string[] | null;
   status: boolean;
   created_at: string;
   deleted_at: string | null;
@@ -176,6 +229,14 @@ export interface JWTPayload {
   role?: string;
   org_id?: string;
   permissions?: string[];
+  app_metadata?: {
+    system_role?: string;
+    org_id?: string;
+    role?: string;
+    plan?: string;
+    features?: Record<string, unknown>;
+    [key: string]: unknown;
+  };
   [key: string]: unknown;
 }
 

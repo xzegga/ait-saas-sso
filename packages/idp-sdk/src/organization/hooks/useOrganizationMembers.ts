@@ -37,7 +37,7 @@ export const useOrganizationMembers = (organizationId: string): UseOrganizationM
         .from('org_members')
         .select('*, user:profiles(*), organization:organizations(*)')
         .eq('org_id', organizationId)
-        .is('deleted_at', null);
+        .eq('status', 'active');
 
       if (fetchError) {
         throw new Error(fetchError.message);

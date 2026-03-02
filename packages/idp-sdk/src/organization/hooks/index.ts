@@ -6,3 +6,4 @@ export * from './useOrganizationMembers';
 export * from './useInviteMember';
 export * from './useRemoveMember';
 export * from './useProductRoles';
+export * from './useOrganizationAddresses';

@@ -1,11 +1,12 @@
 /**
  * Sign Up Form Component
- * Handles complete user registration with organization creation and plan selection
- * Two-step flow: 1) User info, 2) Plan selection with cards
+ * New flow: 1) User info → Create user → 2) Verification → 3) Plan selection
  */
 
 import React, { useState, FormEvent, useEffect, useMemo } from 'react';
 import { useSignUp } from '../hooks/useSignUp';
+import { useVerifyOtp } from '../hooks/useVerifyOtp';
+import { useCompleteSignup } from '../hooks/useCompleteSignup';
 import { useIDP } from '../../providers/IDPProvider';
 import { useBillingIntervals } from '../../billing/hooks/useBillingIntervals';
 import { logger } from '../../shared/logger';
@@ -15,6 +16,7 @@ import { Label } from '../../components/ui/label';
 import { Alert, AlertDescription, AlertTitle } from '../../components/ui/alert';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '../../components/ui/card';
 import { ToggleGroup, ToggleGroupItem } from '../../components/ui/toggle-group';
+import { VerificationRequired } from './VerificationRequired';
 import { AlertCircle, Check, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { AvailablePlan } from '../../billing/hooks/useAvailablePlans';
@@ -31,7 +33,7 @@ const Icon: React.FC<{ icon: typeof AlertCircle | typeof Check | typeof X; class
 export interface SignUpFormProps {
   onSuccess?: (data: { orgId: string; subscriptionId: string; status: 'trial' | 'active' }) => void;
   onError?: (error: Error) => void;
-  onStepChange?: (step: 1 | 2) => void;
+  onStepChange?: (step: 1 | 2 | 3) => void;
   className?: string;
   availablePlans?: AvailablePlan[];
 }
@@ -39,6 +41,7 @@ export interface SignUpFormProps {
 interface FormData {
   email: string;
   password: string;
+  confirmPassword: string;
   fullName: string;
   orgName: string;
   useUserName: boolean;
@@ -50,27 +53,70 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({
   onStepChange,
   className = '',
   availablePlans = [],
-}: SignUpFormProps) => {
-  const { signUp, loading, error } = useSignUp();
-  const { validationError, isValidating, config } = useIDP();
-  const { intervals: billingIntervals } = useBillingIntervals();
+}) => {
+  const { signUp, loading: signUpLoading, error: signUpError } = useSignUp();
+  const { verifyOtp, loading: verifyingOtp, error: verifyError } = useVerifyOtp();
+  const { completeSignup, loading: completeLoading, error: completeError } = useCompleteSignup();
+  const { validationError, isValidating, config, supabase } = useIDP();
+  const { intervals: allBillingIntervals } = useBillingIntervals();
   
-  // Step management
-  const [step, setStep] = useState<1 | 2>(1);
+  // Step management (1: User info, 2: Verification, 3: Plan selection)
+  const [step, setStep] = useState<1 | 2 | 3>(1);
   
   // Form state
   const [formData, setFormData] = useState<FormData>({
     email: '',
     password: '',
+    confirmPassword: '',
     fullName: '',
     orgName: '',
     useUserName: true,
   });
+  
+  // Store signup result for verification step
+  const [signupResult, setSignupResult] = useState<{ userId: string; email: string } | null>(null);
   const [showOrgField, setShowOrgField] = useState(false);
   const [selectedBillingInterval, setSelectedBillingInterval] = useState<string>('month');
+  
+  // Filter billing intervals to only show those with prices configured for available plans
+  const billingIntervals = useMemo(() => {
+    if (availablePlans.length === 0) {
+      logger.debug('No available plans, returning all billing intervals', { count: allBillingIntervals.length });
+      return allBillingIntervals;
+    }
+    
+    // Get all unique billing intervals that have prices configured in any plan
+    const configuredIntervals = new Set<string>();
+    availablePlans.forEach(plan => {
+      plan.prices?.forEach(price => {
+        if (price.billing_interval) {
+          configuredIntervals.add(price.billing_interval);
+        }
+      });
+    });
+    
+    // Filter billing intervals to only include configured ones
+    const filtered = allBillingIntervals.filter(bi => configuredIntervals.has(bi.key));
+    
+    return filtered;
+  }, [allBillingIntervals, availablePlans]);
+  
+  // Update selected billing interval if it's not in the filtered list
+  useEffect(() => {
+    if (billingIntervals.length > 0) {
+      const intervalExists = billingIntervals.some(bi => bi.key === selectedBillingInterval);
+      if (!intervalExists) {
+        const defaultInterval = billingIntervals.find(bi => bi.key === 'month') || billingIntervals[0];
+        if (defaultInterval) {
+          setSelectedBillingInterval(defaultInterval.key);
+        }
+      }
+    }
+  }, [billingIntervals, selectedBillingInterval]);
 
   const hasValidationError = !!(validationError && config.clientSecret);
-  const isDisabled = hasValidationError || isValidating || loading;
+  const isDisabled = hasValidationError || isValidating || signUpLoading || verifyingOtp || completeLoading;
+  const currentError = signUpError || verifyError || completeError;
 
   // Get default billing interval (first one or 'month')
   useEffect(() => {
@@ -95,7 +141,8 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({
     }
   }, [formData.useUserName, formData.fullName]);
 
-  const handleStep1Submit = (e: FormEvent<HTMLFormElement>) => {
+  // Step 1: User Information Form → Create user → Step 2 (Verification)
+  const handleStep1Submit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     
     if (hasValidationError) {
@@ -103,24 +150,88 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({
     }
 
     // Validate required fields
-    if (!formData.fullName || !formData.email || !formData.password) {
+    if (!formData.fullName || !formData.email || !formData.password || !formData.confirmPassword) {
       const err = new Error('Please fill in all required fields');
       logger.error('Signup validation error', err);
       onError?.(err);
       return;
     }
 
-    // Move to step 2
-    setStep(2);
-    onStepChange?.(2);
-  };
-
-  const handlePlanSignUp = async (planId: string, productPlanId: string) => {
-    if (hasValidationError) {
+    // Validate password match
+    if (formData.password !== formData.confirmPassword) {
+      const err = new Error('Passwords do not match');
+      logger.error('Signup validation error', err);
+      onError?.(err);
       return;
     }
 
-    if (!config.productId) {
+    try {
+      // Create user (without org/subscription)
+      const result = await signUp({
+        email: formData.email,
+        password: formData.password,
+        confirmPassword: formData.confirmPassword,
+        fullName: formData.fullName,
+        orgName: formData.useUserName ? undefined : formData.orgName,
+        useUserName: formData.useUserName,
+      });
+
+      logger.info('User created, moving to verification', result);
+      
+      // Store result and move to verification step
+      setSignupResult(result);
+      setStep(2);
+      onStepChange?.(2);
+    } catch (err: any) {
+      logger.error('Sign up error', err);
+      onError?.(err);
+    }
+  };
+
+  // Step 2: Verification → Verify OTP → Step 3 (Plan selection)
+  if (step === 2 && signupResult) {
+    const handleVerify = async (code: string) => {
+      try {
+        await verifyOtp(signupResult.email, code, 'signup', config.productId);
+        logger.info('Email verified successfully, moving to plan selection');
+        // Move to plan selection after verification
+        setStep(3);
+        onStepChange?.(3);
+      } catch (err: any) {
+        logger.error('Verification error', err);
+        throw err; // Let VerificationRequired handle the error display
+      }
+    };
+
+    const handleResend = async () => {
+      try {
+        await supabase.auth.resend({
+          type: 'signup',
+          email: signupResult.email,
+        });
+      } catch (err) {
+        logger.error('Resend error', err);
+        throw err;
+      }
+    };
+
+    return (
+      <div className={cn('idp-space-y-6', className)}>
+        <VerificationRequired
+          email={signupResult.email}
+          onVerify={handleVerify}
+          onResend={handleResend}
+          type="signup"
+          loading={verifyingOtp}
+          error={verifyError?.message || null}
+        />
+      </div>
+    );
+  }
+
+  // Step 3: Plan Selection → Complete signup (create org/subscription)
+  const handlePlanSignUp = async (planId: string, productPlanId: string) => {
+    if (hasValidationError || !config.productId) {
       const err = new Error('Product ID is not configured');
       logger.error('Signup configuration error', err);
       onError?.(err);
@@ -128,10 +239,8 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({
     }
 
     try {
-      const result = await signUp({
-        email: formData.email,
-        password: formData.password,
-        fullName: formData.fullName,
+      // Complete signup: create org and subscription
+      const result = await completeSignup({
         productId: config.productId,
         planId,
         billingInterval: selectedBillingInterval,
@@ -139,14 +248,14 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({
         useUserName: formData.useUserName,
       });
 
-      logger.info('Sign up completed successfully', result);
+      logger.info('Signup completed successfully', result);
       onSuccess?.({
         orgId: result.orgId,
         subscriptionId: result.subscriptionId,
         status: result.status,
       });
     } catch (err: any) {
-      logger.error('Sign up error', err);
+      logger.error('Complete signup error', err);
       onError?.(err);
     }
   };
@@ -213,6 +322,25 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({
           </p>
         </div>
 
+        <div className="idp-space-y-2">
+          <Label htmlFor="confirmPassword">Confirm Password</Label>
+          <Input
+            id="confirmPassword"
+            type="password"
+            value={formData.confirmPassword}
+            onChange={(e) => setFormData(prev => ({ ...prev, confirmPassword: e.target.value }))}
+            required
+            disabled={isDisabled}
+            placeholder="Confirm your password"
+            minLength={6}
+          />
+          {formData.confirmPassword && formData.password !== formData.confirmPassword && (
+            <p className="idp-text-xs idp-text-red-600 dark:idp-text-red-400">
+              Passwords do not match
+            </p>
+          )}
+        </div>
+
         {/* Organization Name */}
         <div className="idp-space-y-2">
           <div className="idp-flex idp-items-center idp-space-x-2">
@@ -246,10 +374,10 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({
         </div>
 
         {/* Error Message */}
-        {error && !hasValidationError && (
+        {currentError && !hasValidationError && (
           <Alert variant="destructive">
             <Icon icon={AlertCircle} className="idp-h-4 idp-w-4" />
-            <AlertDescription>{error.message}</AlertDescription>
+            <AlertDescription>{currentError.message}</AlertDescription>
           </Alert>
         )}
 
@@ -258,13 +386,13 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({
           disabled={isDisabled}
           className="idp-w-full"
         >
-          {isValidating ? 'Validating...' : 'Continue'}
+          {signUpLoading ? 'Creating account...' : isValidating ? 'Validating...' : 'Continue'}
         </Button>
       </form>
     );
   }
 
-  // Step 2: Plan Selection with Cards
+  // Step 3: Plan Selection with Cards
   // Get price for selected billing interval for each plan
   const getPlanPrice = (plan: AvailablePlan, intervalKey: string) => {
     const price = plan.prices?.find(p => p.billing_interval === intervalKey);
@@ -302,10 +430,10 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({
         type="button"
         variant="ghost"
         onClick={() => {
-          setStep(1);
-          onStepChange?.(1);
+          setStep(2);
+          onStepChange?.(2);
         }}
-        disabled={loading}
+        disabled={completeLoading}
         className="idp-mb-4"
       >
         ← Back
@@ -320,8 +448,8 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({
           </p>
         </div>
 
-        {/* Billing Interval Selector - Simple Toggle Style */}
-        {billingIntervals.length > 0 && (
+        {/* Billing Interval Selector */}
+        {availablePlans.length > 0 && billingIntervals.length > 0 && (
           <div className="idp-flex idp-justify-center">
             <ToggleGroup
               type="single"
@@ -362,7 +490,6 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({
               const priceDisplay = selectedPrice 
                 ? `$${selectedPrice.price.toFixed(0)}` 
                 : 'Free';
-              const currency = selectedPrice?.currency || 'USD';
               const billingPeriodLabel = billingIntervals.find(bi => bi.key === selectedBillingInterval)?.label || 'Month';
 
               // Simple color scheme based on plan index
@@ -387,7 +514,7 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({
                   key={plan.id} 
                   className={cn(
                     'idp-relative idp-overflow-hidden idp-transition-all hover:idp-shadow-lg idp-border idp-h-full idp-flex idp-flex-col',
-                    loading && 'idp-opacity-50 idp-pointer-events-none'
+                    completeLoading && 'idp-opacity-50 idp-pointer-events-none'
                   )}
                 >
                   <CardHeader className="idp-pb-4">
@@ -443,7 +570,6 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({
                           );
                         })
                       ) : (
-                        // Fallback if no entitlements
                         <div className="idp-text-sm idp-text-muted-foreground idp-italic">
                           No features specified
                         </div>
@@ -466,11 +592,11 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({
                   <CardFooter className="idp-p-6 idp-pt-4">
                     <Button
                       onClick={() => handlePlanSignUp(plan.id, plan.product_plan_id)}
-                      disabled={loading || isDisabled}
+                      disabled={completeLoading || isDisabled}
                       className={cn('idp-w-full idp-text-white idp-font-semibold', colorScheme.button)}
                       size="lg"
                     >
-                      {loading ? 'Creating account...' : 'Choose'}
+                      {completeLoading ? 'Completing signup...' : 'Choose'}
                     </Button>
                   </CardFooter>
                 </Card>
@@ -488,10 +614,10 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({
       )}
 
       {/* Error Message */}
-      {error && !hasValidationError && (
+      {currentError && !hasValidationError && (
         <Alert variant="destructive">
           <Icon icon={AlertCircle} className="idp-h-4 idp-w-4" />
-          <AlertDescription>{error.message}</AlertDescription>
+          <AlertDescription>{currentError.message}</AlertDescription>
         </Alert>
       )}
     </div>

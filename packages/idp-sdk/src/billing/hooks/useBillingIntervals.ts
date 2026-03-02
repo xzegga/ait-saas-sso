@@ -32,6 +32,7 @@ export const useBillingIntervals = (): UseBillingIntervalsReturn => {
     setError(null);
 
     try {
+      logger.debug('Fetching billing intervals...');
       const { data, error: fetchError } = await supabase
         .from('billing_intervals')
         .select('key, label, description, days, sort_order')
@@ -40,8 +41,20 @@ export const useBillingIntervals = (): UseBillingIntervalsReturn => {
         .order('sort_order', { ascending: true });
 
       if (fetchError) {
+        logger.error('Error fetching billing intervals', {
+          error: fetchError,
+          code: fetchError.code,
+          message: fetchError.message,
+          details: fetchError.details,
+          hint: fetchError.hint,
+        });
         throw new Error(`Failed to fetch billing intervals: ${fetchError.message}`);
       }
+
+      logger.debug('Billing intervals fetched', {
+        count: data?.length || 0,
+        intervals: data,
+      });
 
       setIntervals(data || []);
     } catch (err: any) {

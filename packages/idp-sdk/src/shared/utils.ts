@@ -65,9 +65,15 @@ export function hasRole(payload: JWTPayload | null, role: string): boolean {
 
 /**
  * Get organization ID from JWT payload
+ * Checks app_metadata first (where custom_access_token_hook stores it), then falls back to direct org_id
  */
 export function getOrganizationId(payload: JWTPayload | null): string | null {
   if (!payload) return null;
+  // Check app_metadata first (where custom_access_token_hook stores it)
+  if (payload.app_metadata && typeof payload.app_metadata === 'object' && 'org_id' in payload.app_metadata) {
+    return payload.app_metadata.org_id as string || null;
+  }
+  // Fallback to direct org_id (for backward compatibility)
   return payload.org_id || null;
 }
 

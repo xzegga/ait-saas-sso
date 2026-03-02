@@ -8,9 +8,10 @@ import { ConfigurationError } from './errors';
 import { logger } from './logger';
 
 /**
- * Validates a client_secret against the IDP
+ * Validates a client_secret against the IDP (client_id, secret and origin).
+ * Origin is read on the backend from the request headers (Origin/Referer), not sent by the client.
  * @param supabase - Supabase client instance
- * @param productId - Product ID to validate
+ * @param productId - Product ID (or client_id) to validate
  * @param clientSecret - Client secret to validate
  * @returns Promise<boolean> - true if valid, false otherwise
  */

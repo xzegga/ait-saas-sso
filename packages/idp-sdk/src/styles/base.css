@@ -28,6 +28,24 @@
   color: white;
 }
 
+.idp-button-danger {
+  background-color: #dc2626;
+  color: white;
+}
+
+.idp-button-danger:hover:not(:disabled) {
+  background-color: #b91c1c;
+}
+
+.idp-button-sm {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.8125rem;
+}
+
+.idp-button + .idp-button {
+  margin-left: 0.5rem;
+}
+
 .idp-button:disabled {
   opacity: 0.5;
   cursor: not-allowed;
@@ -58,6 +76,55 @@
 
 .idp-form-group {
   margin-bottom: var(--idp-spacing);
+}
+
+.idp-form-row {
+  display: flex;
+  gap: 1rem;
+}
+
+.idp-form-row .idp-form-group {
+  flex: 1;
+}
+
+.idp-form-actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: var(--idp-spacing);
+}
+
+.idp-address-block {
+  margin-bottom: 1.5rem;
+  padding: 1rem;
+  border: 1px solid var(--idp-border);
+  border-radius: var(--idp-radius);
+}
+
+.idp-address-block-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.idp-address-type-title {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  flex: 1;
+}
+
+.idp-address-display {
+  margin-top: 0.5rem;
+}
+
+.idp-address-line {
+  margin: 0.25rem 0;
+  font-size: 0.875rem;
+}
+
+.idp-text-muted {
+  color: var(--idp-text-muted);
 }
 
 .idp-error-message {

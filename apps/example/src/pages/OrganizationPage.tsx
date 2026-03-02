@@ -19,8 +19,7 @@ export const OrganizationPage = () => {
       <div className="organization-content">
         <div className="organization-info">
           <h2>Organization Details</h2>
-          <div className="info-card">
-            <p><strong>Organization ID:</strong> {MOCK_ORGANIZATION_ID}</p>
+          <div className="info-card">            
             <p><strong>Current User:</strong> {user?.email}</p>
           </div>
         </div>

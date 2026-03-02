@@ -7,3 +7,6 @@ export * from './useLogout';
 export * from './useForgotPassword';
 export * from './useResetPassword';
 export * from './useSignUp';
+export * from './useVerifyOtp';
+export * from './useCompleteSignup';
+export * from './useSendSubscriptionPurchasedEmail';
