@@ -4,6 +4,7 @@
  */
 
 import React, { useState, FormEvent } from 'react';
+import { toast } from 'sonner';
 import { useResetPassword } from '../hooks/useResetPassword';
 import { useIDP } from '../../providers/IDPProvider';
 import { logger } from '../../shared/logger';
@@ -47,18 +48,21 @@ export const ResetPasswordForm: React.FC<ResetPasswordFormProps> = ({
     
     // Validate passwords match
     if (newPassword !== confirmPassword) {
-      const err = new Error('Passwords do not match');
-      onError?.(err);
+      toast.error('Passwords do not match');
+      onError?.(new Error('Passwords do not match'));
       return;
     }
 
     try {
       await resetPassword(newPassword, confirmPassword, config.productId);
       logger.info('Password reset successfully');
+      toast.success('Password reset successfully');
       setShowSuccess(true);
       onSuccess?.();
     } catch (err: any) {
       logger.error('Reset password form error', err);
+      const message = err?.message ?? 'Error resetting password';
+      toast.error(message);
       onError?.(err);
     }
   };

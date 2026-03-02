@@ -44,7 +44,6 @@ export const ProfilePage = () => {
             </div>
           ) : (
             <div className="profile-section">
-              <h2>Organization Information</h2>
               <OrganizationProfileForm
                 onSuccess={() => {
                   console.log('Organization updated successfully');

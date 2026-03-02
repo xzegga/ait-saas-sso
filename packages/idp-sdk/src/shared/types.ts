@@ -20,7 +20,7 @@ export interface UserUpdate {
 }
 
 /** Address type for organization_addresses (matches DB constraint) */
-export type OrganizationAddressType = 'billing' | 'shipping' | 'legal' | 'headquarters';
+export type OrganizationAddressType = 'billing' | 'legal';
 
 export interface Organization {
   id: string;

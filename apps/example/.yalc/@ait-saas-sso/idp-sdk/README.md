@@ -14,6 +14,25 @@ yarn add @ait-saas-sso/idp-sdk
 
 **Nota:** El SDK incluye `@supabase/supabase-js` como dependencia, no necesitas instalarlo manualmente.
 
+**Toasts:** Los formularios del SDK muestran mensajes de éxito/error con [sonner](https://github.com/emilkowalski/sonner). Debes instalar `sonner` en tu app y renderizar el `<Toaster />` una vez (por ejemplo en tu raíz):
+
+```bash
+pnpm add sonner
+```
+
+```tsx
+import { Toaster } from 'sonner';
+
+function App() {
+  return (
+    <>
+      <Toaster richColors position="top-right" />
+      {/* ... resto de tu app */}
+    </>
+  );
+}
+```
+
 ## Uso Básico
 
 ```tsx

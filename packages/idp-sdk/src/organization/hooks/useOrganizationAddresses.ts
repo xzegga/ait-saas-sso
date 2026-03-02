@@ -1,5 +1,5 @@
 /**
- * Hook for fetching and managing organization addresses (by type: billing, shipping, legal, headquarters)
+ * Hook for fetching and managing organization addresses (by type: billing, legal)
  */
 
 import { useState, useCallback, useEffect } from 'react';

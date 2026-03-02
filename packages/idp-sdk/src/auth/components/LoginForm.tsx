@@ -4,6 +4,7 @@
  */
 
 import React, { useState, FormEvent } from 'react';
+import { toast } from 'sonner';
 import { useLogin } from '../hooks/useLogin';
 import { useIDP } from '../../providers/IDPProvider';
 import { logger } from '../../shared/logger';
@@ -51,9 +52,12 @@ export const LoginForm: React.FC<LoginFormProps> = ({
     try {
       await login({ email, password });
       logger.info('Login form submitted successfully');
+      toast.success('Signed in successfully');
       onSuccess?.();
     } catch (err: any) {
       logger.error('Login form error', err);
+      const message = err?.message ?? 'Error signing in';
+      toast.error(message);
       onError?.(err);
     }
   };

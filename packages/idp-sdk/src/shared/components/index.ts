@@ -3,3 +3,4 @@
  */
 
 export * from './UserMenu';
+export * from './ConfirmSaveDialog';

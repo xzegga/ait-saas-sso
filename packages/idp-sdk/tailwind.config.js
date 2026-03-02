@@ -6,6 +6,7 @@ export default {
   content: [
     './src/**/*.{ts,tsx}',
   ],
+  /** Prefix to avoid class name conflicts with consuming applications' Tailwind */
   prefix: 'idp-',
   theme: {
     container: {

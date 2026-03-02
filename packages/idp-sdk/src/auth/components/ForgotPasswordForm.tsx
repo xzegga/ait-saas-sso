@@ -4,6 +4,7 @@
  */
 
 import React, { useState, FormEvent } from 'react';
+import { toast } from 'sonner';
 import { useForgotPassword } from '../hooks/useForgotPassword';
 import { VerificationRequired } from './VerificationRequired';
 import { logger } from '../../shared/logger';
@@ -43,10 +44,13 @@ export const ForgotPasswordForm: React.FC<ForgotPasswordFormProps> = ({
     try {
       await sendResetEmail(email);
       logger.info('Password reset OTP sent successfully');
+      toast.success('Verification code sent to your email');
       setShowVerification(true);
       onSuccess?.(email);
     } catch (err: any) {
       logger.error('Forgot password form error', err);
+      const message = err?.message ?? 'Error sending email';
+      toast.error(message);
       onError?.(err);
     }
   };

@@ -11,7 +11,8 @@
       "import": "./dist/index.js",
       "types": "./dist/index.d.ts"
     },
-    "./style.css": "./dist/style.css",
+    "./style.css": "./dist/index.css",
+    "./index.css": "./dist/index.css",
     "./auth": {
       "import": "./dist/auth/index.js",
       "types": "./dist/auth/index.d.ts"
@@ -61,7 +62,8 @@
   "license": "ISC",
   "peerDependencies": {
     "react": "^18.0.0 || ^19.0.0",
-    "react-dom": "^18.0.0 || ^19.0.0"
+    "react-dom": "^18.0.0 || ^19.0.0",
+    "sonner": "^2.0.0"
   },
   "dependencies": {
     "@radix-ui/react-alert-dialog": "^1.0.5",
@@ -73,14 +75,10 @@
     "@radix-ui/react-tabs": "^1.0.4",
     "@radix-ui/react-toggle-group": "^1.1.7",
     "@supabase/supabase-js": "^2.90.1",
-    "autoprefixer": "^10.4.17",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.0",
     "lucide-react": "^0.344.0",
-    "postcss": "^8.4.33",
-    "tailwind-merge": "^2.2.1",
-    "tailwindcss": "^3.4.19",
-    "tailwindcss-animate": "^1.0.7"
+    "tailwind-merge": "^2.2.1"
   },
-  "yalcSig": "7be130c9f598ccba4c70b22e4135dea7"
+  "yalcSig": "8d06a250b2dad61bd65f892440f31f43"
 }

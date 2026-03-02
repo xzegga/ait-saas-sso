@@ -1,3 +1,4 @@
+import { Toaster } from 'sonner';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { IDPProvider, AuthProvider, AuthGuard } from '@ait-saas-sso/idp-sdk';
 import { SUPABASE_URL, SUPABASE_ANON_KEY, PRODUCT_ID, CLIENT_SECRET } from './config/supabase';
@@ -22,6 +23,7 @@ function App() {
       productId={PRODUCT_ID || undefined}
       clientSecret={CLIENT_SECRET || undefined}
     >
+      <Toaster richColors position="top-right" />
       <AuthProvider>
         <BrowserRouter>
           <Routes>

@@ -30,3 +30,4 @@ Las migraciones están ordenadas para crear el esquema desde cero con dependenci
 | 024 | fix_render_email_template_otp_functions | `get_signup_otp_email_data`, `get_password_reset_otp_email_data`, `get_welcome_email_data`, `get_password_reset_success_email_data` con firma correcta de `render_email_template` (original 039) |
 | 025 | subscription_purchased_email | Plantilla subscription_purchased + `get_subscription_purchased_email_data` (original 040) |
 | 026 | schema_organizations_extended | Organizaciones: `slug`, `legal_name`, `tax_id`, `status`, `support_email`, `phone`. Tabla `organization_addresses` (tipos: billing, shipping, legal, headquarters), RLS e índices |
+| 027 | rls_org_members_own | Política "View own memberships" en org_members (user_id = auth.uid()) para poder resolver org_id cuando el JWT no lo trae |

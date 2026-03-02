@@ -4,7 +4,9 @@
  */
 
 import React, { useState, FormEvent, useEffect } from 'react';
+import { toast } from 'sonner';
 import { useOrganization } from '../hooks/useOrganization';
+import { ConfirmSaveDialog } from '../../shared/components/ConfirmSaveDialog';
 
 export interface OrganizationProfileFormProps {
   organizationId?: string;
@@ -30,6 +32,7 @@ export const OrganizationProfileForm: React.FC<OrganizationProfileFormProps> = (
   const [taxId, setTaxId] = useState('');
   const [supportEmail, setSupportEmail] = useState('');
   const [phone, setPhone] = useState('');
+  const [showConfirm, setShowConfirm] = useState(false);
 
   useEffect(() => {
     if (organization) {
@@ -43,9 +46,12 @@ export const OrganizationProfileForm: React.FC<OrganizationProfileFormProps> = (
     }
   }, [organization]);
 
-  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    setShowConfirm(true);
+  };
 
+  const handleConfirmSave = async () => {
     try {
       await updateOrganization({
         name,
@@ -58,9 +64,12 @@ export const OrganizationProfileForm: React.FC<OrganizationProfileFormProps> = (
           phone: phone || null,
         }),
       });
+      toast.success('Organization updated successfully');
       onSuccess?.();
     } catch (err: any) {
-      onError?.(err);
+      const message = err instanceof Error ? err.message : 'Error saving changes';
+      toast.error(message);
+      onError?.(err instanceof Error ? err : new Error(message));
     }
   };
 
@@ -73,132 +82,144 @@ export const OrganizationProfileForm: React.FC<OrganizationProfileFormProps> = (
   }
 
   return (
-    <form onSubmit={handleSubmit} className={`idp-organization-profile-form ${className}`}>
-      <h3 className="idp-form-title">Organization Information</h3>
-
-      <div className="idp-form-group">
-        <label htmlFor="orgName" className="idp-label">
-          Organization Name
-        </label>
-        <input
-          id="orgName"
-          type="text"
-          value={name}
-          onChange={(e: React.ChangeEvent<HTMLInputElement>) => setName(e.target.value)}
-          required
-          disabled={updating}
-          className="idp-input"
-          placeholder="Enter organization name"
-        />
+    <div className={`idp-card idp-organization-profile-form ${className}`}>
+      <div className="idp-card-header">
+        <h3 className="idp-card-title">Organization Information</h3>
       </div>
-
-      <div className="idp-form-group">
-        <label htmlFor="billingEmail" className="idp-label">
-          Billing Email
-        </label>
-        <input
-          id="billingEmail"
-          type="email"
-          value={billingEmail}
-          onChange={(e: React.ChangeEvent<HTMLInputElement>) => setBillingEmail(e.target.value)}
-          disabled={updating}
-          className="idp-input"
-          placeholder="Enter billing email"
-        />
-      </div>
-
-      {showExtendedFields && (
-        <>
+      <form onSubmit={handleSubmit} className="idp-card-body">
+        <div className="idp-form-section">
           <div className="idp-form-group">
-            <label htmlFor="orgSlug" className="idp-label">
-              Slug (URL identifier)
+            <label htmlFor="orgName" className="idp-label">
+              Organization Name
             </label>
             <input
-              id="orgSlug"
+              id="orgName"
               type="text"
-              value={slug}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSlug(e.target.value)}
+              value={name}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setName(e.target.value)}
+              required
               disabled={updating}
               className="idp-input"
-              placeholder="e.g. acme-corp"
+              placeholder="Enter organization name"
             />
           </div>
-
           <div className="idp-form-group">
-            <label htmlFor="legalName" className="idp-label">
-              Legal Name
+            <label htmlFor="billingEmail" className="idp-label">
+              Billing Email
             </label>
             <input
-              id="legalName"
-              type="text"
-              value={legalName}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setLegalName(e.target.value)}
-              disabled={updating}
-              className="idp-input"
-              placeholder="Registered company name"
-            />
-          </div>
-
-          <div className="idp-form-group">
-            <label htmlFor="taxId" className="idp-label">
-              Tax ID / VAT
-            </label>
-            <input
-              id="taxId"
-              type="text"
-              value={taxId}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setTaxId(e.target.value)}
-              disabled={updating}
-              className="idp-input"
-              placeholder="NIF, VAT, EIN, etc."
-            />
-          </div>
-
-          <div className="idp-form-group">
-            <label htmlFor="supportEmail" className="idp-label">
-              Support Email
-            </label>
-            <input
-              id="supportEmail"
+              id="billingEmail"
               type="email"
-              value={supportEmail}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSupportEmail(e.target.value)}
+              value={billingEmail}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setBillingEmail(e.target.value)}
               disabled={updating}
               className="idp-input"
-              placeholder="Support or contact email"
+              placeholder="Enter billing email"
             />
           </div>
-
-          <div className="idp-form-group">
-            <label htmlFor="orgPhone" className="idp-label">
-              Phone
-            </label>
-            <input
-              id="orgPhone"
-              type="tel"
-              value={phone}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPhone(e.target.value)}
-              disabled={updating}
-              className="idp-input"
-              placeholder="Primary contact phone"
-            />
-          </div>
-        </>
-      )}
-
-      {error && (
-        <div className="idp-error-message" role="alert">
-          {error.message}
         </div>
-      )}
 
-      <button
-        type="submit"
-        disabled={updating}
-        className="idp-button idp-button-primary"
-      >
-        {updating ? 'Saving...' : 'Save Changes'}
-      </button>
-    </form>
+        {showExtendedFields && (
+          <div className={`idp-form-section idp-form-grid idp-form-grid-2`}>
+            <div className="idp-form-group">
+              <label htmlFor="orgSlug" className="idp-label">
+                Slug (URL identifier)
+              </label>
+              <input
+                id="orgSlug"
+                type="text"
+                value={slug}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSlug(e.target.value)}
+                disabled={updating}
+                className="idp-input"
+                placeholder="e.g. acme-corp"
+              />
+            </div>
+            <div className="idp-form-group">
+              <label htmlFor="legalName" className="idp-label">
+                Legal Name
+              </label>
+              <input
+                id="legalName"
+                type="text"
+                value={legalName}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setLegalName(e.target.value)}
+                disabled={updating}
+                className="idp-input"
+                placeholder="Registered company name"
+              />
+            </div>
+            <div className="idp-form-group">
+              <label htmlFor="taxId" className="idp-label">
+                Tax ID / VAT
+              </label>
+              <input
+                id="taxId"
+                type="text"
+                value={taxId}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setTaxId(e.target.value)}
+                disabled={updating}
+                className="idp-input"
+                placeholder="NIF, VAT, EIN, etc."
+              />
+            </div>
+            <div className="idp-form-group">
+              <label htmlFor="supportEmail" className="idp-label">
+                Support Email
+              </label>
+              <input
+                id="supportEmail"
+                type="email"
+                value={supportEmail}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSupportEmail(e.target.value)}
+                disabled={updating}
+                className="idp-input"
+                placeholder="Support or contact email"
+              />
+            </div>
+            <div className="idp-form-group idp-form-group-full">
+              <label htmlFor="orgPhone" className="idp-label">
+                Phone
+              </label>
+              <input
+                id="orgPhone"
+                type="tel"
+                value={phone}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPhone(e.target.value)}
+                disabled={updating}
+                className="idp-input"
+                placeholder="Primary contact phone"
+              />
+            </div>
+          </div>
+        )}
+
+        {error && (
+          <div className="idp-error-message" role="alert">
+            {error.message}
+          </div>
+        )}
+
+        <div className="idp-form-actions">
+          <button
+            type="submit"
+            disabled={updating}
+            className="idp-button idp-button-primary"
+          >
+            {updating ? 'Saving...' : 'Save Changes'}
+          </button>
+        </div>
+      </form>
+      <ConfirmSaveDialog
+        open={showConfirm}
+        onOpenChange={setShowConfirm}
+        title="Confirm save"
+        description="Do you want to save the organization changes?"
+        confirmLabel="Save"
+        cancelLabel="Cancel"
+        onConfirm={handleConfirmSave}
+        loading={updating}
+      />
+    </div>
   );
 };

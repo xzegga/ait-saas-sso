@@ -11,6 +11,7 @@
     --idp-popover: 0 0% 100%;
     --idp-popover-foreground: 222.2 84% 4.9%;
     --idp-primary: 221.2 83.2% 53.3%;
+    --idp-primary-hover: 221.2 83.2% 45%;
     --idp-primary-foreground: 210 40% 98%;
     --idp-secondary: 210 40% 96.1%;
     --idp-secondary-foreground: 222.2 47.4% 11.2%;
@@ -24,6 +25,14 @@
     --idp-input: 214.3 31.8% 91.4%;
     --idp-ring: 221.2 83.2% 53.3%;
     --idp-radius: 0.5rem;
+    --idp-radius-lg: 0.75rem;
+    --idp-spacing: 0.75rem;
+    --idp-text: 222.2 84% 4.9%;
+    --idp-text-muted: 215.4 16.3% 46.9%;
+    --idp-error: 0 84.2% 60.2%;
+    --idp-bg-secondary: 210 40% 98%;
+    --idp-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+    --idp-shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
   }
 
   .dark {
@@ -34,6 +43,7 @@
     --idp-popover: 222.2 84% 4.9%;
     --idp-popover-foreground: 210 40% 98%;
     --idp-primary: 217.2 91.2% 59.8%;
+    --idp-primary-hover: 217.2 91.2% 50%;
     --idp-primary-foreground: 222.2 47.4% 11.2%;
     --idp-secondary: 217.2 32.6% 17.5%;
     --idp-secondary-foreground: 210 40% 98%;
@@ -46,6 +56,12 @@
     --idp-border: 217.2 32.6% 17.5%;
     --idp-input: 217.2 32.6% 17.5%;
     --idp-ring: 224.3 76.3% 94.9%;
+    --idp-text: 210 40% 98%;
+    --idp-text-muted: 215 20.2% 65.1%;
+    --idp-error: 0 62.8% 50%;
+    --idp-bg-secondary: 217.2 32.6% 12%;
+    --idp-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.3);
+    --idp-shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.3), 0 2px 4px -2px rgb(0 0 0 / 0.2);
   }
 }
 

@@ -4,6 +4,7 @@
  */
 
 import React, { useState, FormEvent, useEffect, useMemo } from 'react';
+import { toast } from 'sonner';
 import { useSignUp } from '../hooks/useSignUp';
 import { useVerifyOtp } from '../hooks/useVerifyOtp';
 import { useCompleteSignup } from '../hooks/useCompleteSignup';
@@ -153,6 +154,7 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({
     if (!formData.fullName || !formData.email || !formData.password || !formData.confirmPassword) {
       const err = new Error('Please fill in all required fields');
       logger.error('Signup validation error', err);
+      toast.error('Please fill in all required fields');
       onError?.(err);
       return;
     }
@@ -161,6 +163,7 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({
     if (formData.password !== formData.confirmPassword) {
       const err = new Error('Passwords do not match');
       logger.error('Signup validation error', err);
+      toast.error('Passwords do not match');
       onError?.(err);
       return;
     }
@@ -177,13 +180,14 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({
       });
 
       logger.info('User created, moving to verification', result);
-      
+      toast.success('Account created. Check your email to verify.');
       // Store result and move to verification step
       setSignupResult(result);
       setStep(2);
       onStepChange?.(2);
     } catch (err: any) {
       logger.error('Sign up error', err);
+      toast.error(err?.message ?? 'Error creating account');
       onError?.(err);
     }
   };
@@ -194,11 +198,13 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({
       try {
         await verifyOtp(signupResult.email, code, 'signup', config.productId);
         logger.info('Email verified successfully, moving to plan selection');
+        toast.success('Email verified successfully');
         // Move to plan selection after verification
         setStep(3);
         onStepChange?.(3);
       } catch (err: any) {
         logger.error('Verification error', err);
+        toast.error(err?.message ?? 'Error verifying code');
         throw err; // Let VerificationRequired handle the error display
       }
     };
@@ -234,6 +240,7 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({
     if (hasValidationError || !config.productId) {
       const err = new Error('Product ID is not configured');
       logger.error('Signup configuration error', err);
+      toast.error('Product not configured');
       onError?.(err);
       return;
     }
@@ -249,6 +256,7 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({
       });
 
       logger.info('Signup completed successfully', result);
+      toast.success('Sign up completed successfully');
       onSuccess?.({
         orgId: result.orgId,
         subscriptionId: result.subscriptionId,
@@ -256,6 +264,7 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({
       });
     } catch (err: any) {
       logger.error('Complete signup error', err);
+      toast.error(err?.message ?? 'Error completing sign up');
       onError?.(err);
     }
   };

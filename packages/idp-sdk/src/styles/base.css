@@ -1,48 +1,119 @@
 /**
  * Base styles for IDP SDK components
- * Legacy styles for backward compatibility
- * New components should use Tailwind classes with idp- prefix
+ * Professional layout: cards, sections, forms, inputs
+ * Uses CSS variables from globals.css (hsl(...) in :root)
  */
 
-.idp-button {
-  padding: 0.5rem 1rem;
+/* ---- Card & section layout ---- */
+.idp-card {
+  background-color: hsl(var(--idp-card));
+  color: hsl(var(--idp-card-foreground));
+  border-radius: var(--idp-radius-lg);
+  border: 1px solid hsl(var(--idp-border));
+  box-shadow: var(--idp-shadow);
+  overflow: hidden;
+}
+
+.idp-card-header {
+  padding: 1.25rem 1.75rem;
+  border-bottom: 1px solid hsl(var(--idp-border));
+  background-color: hsl(var(--idp-muted));
+}
+
+.idp-card-title {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: hsl(var(--idp-foreground));
+  line-height: 1.3;
+}
+
+.idp-card-body {
+  padding: 1.5rem 1.75rem;
+}
+
+.idp-section-title {
+  margin: 0 0 0.375rem 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: hsl(var(--idp-foreground));
+  letter-spacing: -0.02em;
+  line-height: 1.3;
+}
+
+.idp-form-description {
+  margin: 0 0 1.5rem 0;
+  font-size: 0.9375rem;
+  font-weight: 400;
+  color: hsl(var(--idp-muted-foreground));
+  line-height: 1.5;
+}
+
+.idp-user-banner {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  margin-bottom: 1.25rem;
+  background-color: hsl(var(--idp-muted));
   border-radius: var(--idp-radius);
+  border: 1px solid hsl(var(--idp-border));
+  font-size: 0.875rem;
+}
+
+.idp-user-banner strong {
+  color: hsl(var(--idp-foreground));
+  font-weight: 600;
+}
+
+/* ---- Buttons ---- */
+.idp-button {
+  padding: 0.50rem 1.5rem;
+  border-radius: 0.5rem;
   border: none;
   cursor: pointer;
-  font-size: 0.875rem;
-  font-weight: 500;
-  transition: all 0.2s;
+  font-size: 1rem;
+  font-weight: 600;
+  transition: background-color 0.15s ease, opacity 0.15s ease, color 0.15s ease;
 }
 
 .idp-button-primary {
-  background-color: var(--idp-primary);
-  color: white;
+  background-color: hsl(var(--idp-primary));
+  color: hsl(var(--idp-primary-foreground));
 }
 
 .idp-button-primary:hover:not(:disabled) {
-  background-color: var(--idp-primary-hover);
+  background-color: hsl(var(--idp-primary-hover));
 }
 
 .idp-button-secondary {
-  background-color: var(--idp-secondary);
-  color: white;
+  background-color: hsl(var(--idp-secondary));
+  color: hsl(var(--idp-secondary-foreground));
+  border: 1px solid hsl(var(--idp-border));
+}
+
+.idp-button-secondary:hover:not(:disabled) {
+  background-color: hsl(var(--idp-muted));
 }
 
 .idp-button-danger {
-  background-color: #dc2626;
-  color: white;
+  background-color: hsl(var(--idp-destructive));
+  color: hsl(var(--idp-destructive-foreground));
 }
 
 .idp-button-danger:hover:not(:disabled) {
-  background-color: #b91c1c;
+  opacity: 0.9;
+  filter: brightness(0.95);
 }
 
 .idp-button-sm {
-  padding: 0.25rem 0.5rem;
-  font-size: 0.8125rem;
+  padding: 0.25rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 600;
 }
 
-.idp-button + .idp-button {
+.idp-form-actions .idp-button + .idp-button {
   margin-left: 0.5rem;
 }
 
@@ -51,89 +122,210 @@
   cursor: not-allowed;
 }
 
+/* ---- Form & inputs ---- */
+.idp-form-section {
+  margin-bottom: 1.75rem;
+}
+
+.idp-form-section:last-of-type {
+  margin-bottom: 0;
+}
+
+.idp-form-grid {
+  display: grid;
+  gap: 1.25rem;
+}
+
+@media (min-width: 640px) {
+  .idp-form-grid.idp-form-grid-2 {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.25rem 1.5rem;
+  }
+  .idp-form-grid-2 .idp-form-group-full {
+    grid-column: 1 / -1;
+  }
+}
+
 .idp-input,
-.idp-select {
+.idp-select,
+.idp-textarea {
   width: 100%;
-  padding: 0.5rem;
-  border: 1px solid var(--idp-border);
-  border-radius: var(--idp-radius);
-  font-size: 0.875rem;
+  min-height: 2.25rem;
+  padding: 0.75rem 1rem;
+  margin: 0;
+  border: 1px solid hsl(var(--idp-border));
+  border-radius: 0.5rem;
+  font-size: 1rem;
+  font-weight: 400;
+  line-height: 1.5;
+  background-color: hsl(var(--idp-background));
+  color: hsl(var(--idp-foreground));
+  box-sizing: border-box;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, color 0.15s ease;
+}
+
+.idp-textarea {
+  min-height: 6rem;
+  resize: vertical;
+  vertical-align: top;
+}
+
+.idp-input::placeholder,
+.idp-textarea::placeholder {
+  color: hsl(var(--idp-muted-foreground));
+}
+
+.idp-input:focus,
+.idp-select:focus,
+.idp-textarea:focus {
+  outline: none;
+  border-color: hsl(var(--idp-ring));
+  box-shadow: 0 0 0 3px hsl(var(--idp-ring) / 0.25);
+}
+
+.idp-input[aria-invalid="true"],
+.idp-select[aria-invalid="true"],
+.idp-textarea[aria-invalid="true"] {
+  border-color: hsl(var(--idp-destructive));
+  box-shadow: 0 0 0 3px hsl(var(--idp-destructive) / 0.2);
+}
+
+.idp-input[aria-invalid="true"]:focus,
+.idp-select[aria-invalid="true"]:focus,
+.idp-textarea[aria-invalid="true"]:focus {
+  border-color: hsl(var(--idp-destructive));
+  box-shadow: 0 0 0 3px hsl(var(--idp-destructive) / 0.3);
 }
 
 .idp-input:disabled,
-.idp-select:disabled {
-  background-color: var(--idp-bg-secondary);
+.idp-select:disabled,
+.idp-textarea:disabled {
+  background-color: hsl(var(--idp-bg-secondary));
   cursor: not-allowed;
+  opacity: 0.6;
 }
 
 .idp-label {
   display: block;
-  margin-bottom: 0.25rem;
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: var(--idp-text);
+  margin: 0 0 0.5rem 0;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: hsl(var(--idp-foreground));
+  line-height: 1.4;
 }
 
 .idp-form-group {
-  margin-bottom: var(--idp-spacing);
+  margin-bottom: 1.25rem;
+}
+
+.idp-form-group:last-child {
+  margin-bottom: 0;
 }
 
 .idp-form-row {
-  display: flex;
-  gap: 1rem;
+  display: grid;
+  gap: 1.25rem 1.5rem;
+  grid-template-columns: 1fr 1fr;
 }
 
 .idp-form-row .idp-form-group {
-  flex: 1;
+  margin-bottom: 0;
 }
 
 .idp-form-actions {
   display: flex;
-  gap: 0.5rem;
-  margin-top: var(--idp-spacing);
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid hsl(var(--idp-border));
+}
+
+/* ---- Organization form specific ---- */
+.idp-organization-profile-form {
+  max-width: 100%;
+}
+
+.idp-organization-profile-form .idp-form-title {
+  margin: 0 0 1.25rem 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: hsl(var(--idp-foreground));
+}
+
+/* ---- Addresses manager ---- */
+.idp-organization-addresses-manager {
+  max-width: 100%;
+}
+
+.idp-organization-addresses-manager .idp-form-title {
+  margin: 0 0 1rem 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: hsl(var(--idp-foreground));
 }
 
 .idp-address-block {
-  margin-bottom: 1.5rem;
-  padding: 1rem;
-  border: 1px solid var(--idp-border);
-  border-radius: var(--idp-radius);
+  margin-bottom: 1rem;
+  padding: 0;
+  background-color: hsl(var(--idp-card));
+}
+
+.idp-address-block:last-child {
+  margin-bottom: 0;
 }
 
 .idp-address-block-header {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 0.5rem;
   margin-bottom: 0.75rem;
 }
 
 .idp-address-type-title {
   margin: 0;
-  font-size: 1rem;
+  font-size: 0.9375rem;
   font-weight: 600;
   flex: 1;
+  min-width: 8rem;
+  color: hsl(var(--idp-foreground));
 }
 
 .idp-address-display {
   margin-top: 0.5rem;
+  padding: 0.75rem;
+  background-color: hsl(var(--idp-muted));
+  border-radius: var(--idp-radius);
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: hsl(var(--idp-foreground));
 }
 
 .idp-address-line {
-  margin: 0.25rem 0;
-  font-size: 0.875rem;
+  margin: 0.125rem 0;
+}
+
+.idp-address-form {
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid hsl(var(--idp-border));
 }
 
 .idp-text-muted {
-  color: var(--idp-text-muted);
+  color: hsl(var(--idp-muted-foreground));
+  font-size: 0.875rem;
 }
 
+/* ---- Messages ---- */
 .idp-error-message {
-  padding: 0.75rem;
-  background-color: #fef2f2;
-  color: var(--idp-error);
+  padding: 0.75rem 1rem;
+  margin-bottom: 1rem;
+  background-color: hsl(var(--idp-destructive) / 0.1);
+  border: 1px solid hsl(var(--idp-destructive) / 0.3);
   border-radius: var(--idp-radius);
   font-size: 0.875rem;
-  margin-bottom: var(--idp-spacing);
+  color: hsl(var(--idp-destructive));
 }
 
 .idp-config-error {
@@ -142,6 +334,7 @@
   color: #856404;
   margin-bottom: 1.5rem;
   padding: 1rem;
+  border-radius: var(--idp-radius);
 }
 
 .idp-config-error strong {
@@ -158,18 +351,96 @@
 
 .idp-error-hint {
   font-size: 0.75rem !important;
-  color: #6c5a00 !important;
+  color: hsl(var(--idp-muted-foreground)) !important;
   margin-top: 0.5rem !important;
 }
 
 .idp-loading {
-  padding: var(--idp-spacing);
+  padding: 1.5rem;
   text-align: center;
-  color: var(--idp-text-muted);
+  font-size: 0.875rem;
+  color: hsl(var(--idp-muted-foreground));
 }
 
 .idp-empty-state {
-  padding: var(--idp-spacing);
+  padding: 1rem;
   text-align: center;
-  color: var(--idp-text-muted);
+  font-size: 0.875rem;
+  color: hsl(var(--idp-muted-foreground));
+}
+
+.idp-error {
+  padding: 1rem;
+  font-size: 0.875rem;
+  color: hsl(var(--idp-destructive));
+}
+
+/* ---- Reset-proof: ensure inputs/buttons inside SDK cards keep correct look ---- */
+/* Use higher specificity so app resets (* { margin:0; padding:0 }) don't override */
+.idp-card .idp-input,
+.idp-card .idp-select,
+.idp-card .idp-textarea,
+.idp-organization-addresses-manager .idp-input,
+.idp-organization-addresses-manager .idp-select,
+.idp-organization-addresses-manager .idp-textarea {
+  width: 100%;
+  min-height: 2.25rem;
+  padding: 0.75rem 1rem;
+  margin: 0;
+  border: 1px solid hsl(var(--idp-border));
+  border-radius: 0.5rem;
+  font-size: 1rem;
+  background-color: hsl(var(--idp-background));
+  color: hsl(var(--idp-foreground));
+  box-sizing: border-box;
+}
+
+.idp-card .idp-textarea,
+.idp-organization-addresses-manager .idp-textarea {
+  min-height: 6rem;
+  resize: vertical;
+}
+
+.idp-card .idp-input::placeholder,
+.idp-organization-addresses-manager .idp-input::placeholder,
+.idp-card .idp-textarea::placeholder,
+.idp-organization-addresses-manager .idp-textarea::placeholder {
+  color: hsl(var(--idp-muted-foreground));
+}
+
+.idp-card .idp-input:focus,
+.idp-card .idp-select:focus,
+.idp-card .idp-textarea:focus,
+.idp-organization-addresses-manager .idp-input:focus,
+.idp-organization-addresses-manager .idp-select:focus,
+.idp-organization-addresses-manager .idp-textarea:focus {
+  outline: none;
+  border-color: hsl(var(--idp-ring));
+  box-shadow: 0 0 0 3px hsl(var(--idp-ring) / 0.25);
+}
+
+.idp-card .idp-button,
+.idp-organization-addresses-manager .idp-button {
+  padding: 0.75rem 1.5rem;
+  margin: 0;
+  border-radius: 0.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  box-sizing: border-box;
+}
+
+.idp-card .idp-label,
+.idp-organization-addresses-manager .idp-label {
+  display: block;
+  margin: 0 0 0.5rem 0;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: hsl(var(--idp-foreground));
+  line-height: 1.4;
+}
+
+.idp-card .idp-form-group,
+.idp-organization-addresses-manager .idp-form-group {
+  margin-bottom: 1.25rem;
 }

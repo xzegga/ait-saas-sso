@@ -3,7 +3,9 @@
  */
 
 import React, { useState, FormEvent } from 'react';
+import { toast } from 'sonner';
 import { useProductRoles } from '../hooks/useProductRoles';
+import { ConfirmSaveDialog } from '../../shared/components/ConfirmSaveDialog';
 
 export interface RoleAssignmentDialogProps {
   productId: string;
@@ -17,15 +19,29 @@ export const RoleAssignmentDialog: React.FC<RoleAssignmentDialogProps> = ({
   productId,
   onClose,
   onSuccess,
+  onError,
 }: RoleAssignmentDialogProps) => {
   const { roles, loading: rolesLoading } = useProductRoles(productId);
   const [selectedRole, setSelectedRole] = useState('');
+  const [showConfirm, setShowConfirm] = useState(false);
 
-  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    // Implementation would assign role via API
-    onSuccess?.();
-    onClose();
+    if (!selectedRole) return;
+    setShowConfirm(true);
+  };
+
+  const handleConfirmAssign = async () => {
+    try {
+      // TODO: assign role via API when backend is available
+      onSuccess?.();
+      onClose();
+      toast.success('Role assigned successfully');
+    } catch (err: any) {
+      const message = err instanceof Error ? err.message : 'Error assigning role';
+      toast.error(message);
+      onError?.(err instanceof Error ? err : new Error(message));
+    }
   };
 
   return (
@@ -73,6 +89,16 @@ export const RoleAssignmentDialog: React.FC<RoleAssignmentDialogProps> = ({
           </div>
         </form>
       </div>
+      <ConfirmSaveDialog
+        open={showConfirm}
+        onOpenChange={setShowConfirm}
+        title="Confirm assignment"
+        description="Do you want to assign this role to the member?"
+        confirmLabel="Assign role"
+        cancelLabel="Cancel"
+        onConfirm={handleConfirmAssign}
+        loading={false}
+      />
     </div>
   );
 };

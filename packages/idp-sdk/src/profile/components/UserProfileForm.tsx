@@ -3,8 +3,10 @@
  */
 
 import React, { useState, FormEvent, useEffect } from 'react';
+import { toast } from 'sonner';
 import { useUserProfile } from '../hooks/useUserProfile';
 import { useChangePassword } from '../hooks/useChangePassword';
+import { ConfirmSaveDialog } from '../../shared/components/ConfirmSaveDialog';
 
 export interface UserProfileFormProps {
   onSuccess?: () => void;
@@ -23,6 +25,7 @@ export const UserProfileForm: React.FC<UserProfileFormProps> = ({
   const [email, setEmail] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [confirmState, setConfirmState] = useState<'profile' | 'password' | null>(null);
 
   useEffect(() => {
     if (profile) {
@@ -31,32 +34,46 @@ export const UserProfileForm: React.FC<UserProfileFormProps> = ({
     }
   }, [profile]);
 
-  const handleProfileSubmit = async (e: FormEvent<HTMLFormElement>) => {
+  const handleProfileSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    
-    try {
-      await updateProfile({ full_name: fullName });
-      onSuccess?.();
-    } catch (err: any) {
-      onError?.(err);
-    }
+    setConfirmState('profile');
   };
 
-  const handlePasswordSubmit = async (e: FormEvent<HTMLFormElement>) => {
+  const handlePasswordSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    
     if (newPassword !== confirmPassword) {
+      toast.error('Passwords do not match');
       onError?.(new Error('Passwords do not match'));
       return;
     }
+    setConfirmState('password');
+  };
 
+  const handleConfirmProfile = async () => {
+    try {
+      await updateProfile({ full_name: fullName });
+      toast.success('Profile updated successfully');
+      onSuccess?.();
+    } catch (err: any) {
+      const message = err instanceof Error ? err.message : 'Error al guardar';
+      const msg = err instanceof Error ? err.message : 'Error saving profile';
+      toast.error(msg);
+      onError?.(err instanceof Error ? err : new Error(msg));
+    }
+  };
+
+  const handleConfirmPassword = async () => {
     try {
       await changePassword(newPassword);
       setNewPassword('');
       setConfirmPassword('');
+      toast.success('Password updated successfully');
       onSuccess?.();
     } catch (err: any) {
-      onError?.(err);
+      const message = err instanceof Error ? err.message : 'Error al cambiar contraseña';
+      const msg = err instanceof Error ? err.message : 'Error changing password';
+      toast.error(msg);
+      onError?.(err instanceof Error ? err : new Error(msg));
     }
   };
 
@@ -156,6 +173,30 @@ export const UserProfileForm: React.FC<UserProfileFormProps> = ({
           {changingPassword ? 'Changing...' : 'Change Password'}
         </button>
       </form>
+      {confirmState === 'profile' && (
+        <ConfirmSaveDialog
+          open={true}
+          onOpenChange={(open) => !open && setConfirmState(null)}
+          title="Confirm save"
+          description="Do you want to save your profile changes?"
+          confirmLabel="Save"
+          cancelLabel="Cancel"
+          onConfirm={handleConfirmProfile}
+          loading={updating}
+        />
+      )}
+      {confirmState === 'password' && (
+        <ConfirmSaveDialog
+          open={true}
+          onOpenChange={(open) => !open && setConfirmState(null)}
+          title="Confirm password change"
+          description="Do you want to change your password?"
+          confirmLabel="Change password"
+          cancelLabel="Cancel"
+          onConfirm={handleConfirmPassword}
+          loading={changingPassword}
+        />
+      )}
     </div>
   );
 };

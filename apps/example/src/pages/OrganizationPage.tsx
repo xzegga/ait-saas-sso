@@ -1,13 +1,21 @@
 import { useState } from 'react';
-import { OrganizationMembersList } from '@ait-saas-sso/idp-sdk';
-import { useAuth } from '@ait-saas-sso/idp-sdk';
+import {
+  OrganizationMembersList,
+  OrganizationProfileForm,
+  OrganizationAddressesManager,
+  useAuth,
+  useOrganization,
+} from '@ait-saas-sso/idp-sdk';
 
-// Mock organization ID - en producción esto vendría del contexto o JWT
+// Fallback for development when org is not in JWT yet
 const MOCK_ORGANIZATION_ID = '00000000-0000-0000-0000-000000000001';
 
 export const OrganizationPage = () => {
   const { user } = useAuth();
+  const { organization } = useOrganization();
   const [selectedMember, setSelectedMember] = useState<string | null>(null);
+
+  const organizationId = organization?.id ?? MOCK_ORGANIZATION_ID;
 
   return (
     <div className="organization-page">
@@ -18,16 +26,25 @@ export const OrganizationPage = () => {
 
       <div className="organization-content">
         <div className="organization-info">
-          <h2>Organization Details</h2>
-          <div className="info-card">            
-            <p><strong>Current User:</strong> {user?.email}</p>
+          <h2 className="idp-section-title">Organization Details</h2>
+          <div className="idp-user-banner">
+            <strong>Current User:</strong> {user?.email ?? '—'}
           </div>
+          <div className="flex gap-4 w-full [&>div]:flex-1">
+            <OrganizationProfileForm
+              organizationId={organization?.id}
+              showExtendedFields
+            />
+            <OrganizationAddressesManager organizationId={organizationId} />
+        </div>
         </div>
 
-        <div className="organization-members">
-          <h2>Team Members</h2>
+       
+
+        <div className="organization-members" style={{ marginTop: '1.5rem' }}>
+          <h2 className="idp-section-title">Team Members</h2>
           <OrganizationMembersList
-            organizationId={MOCK_ORGANIZATION_ID}
+            organizationId={organizationId}
             onMemberClick={(memberId) => {
               setSelectedMember(memberId);
               console.log('Selected member:', memberId);

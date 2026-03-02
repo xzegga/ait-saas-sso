@@ -3,6 +3,10 @@ import react from '@vitejs/plugin-react';
 import { resolve } from 'path';
 import dts from 'vite-plugin-dts';
 
+/**
+ * Library build: JS + CSS extracted to separate file (dist/index.css).
+ * Tailwind is processed via PostCSS. CSS is not inlined in the bundle.
+ */
 export default defineConfig({
   plugins: [
     react(),
@@ -25,27 +29,20 @@ export default defineConfig({
     cssCodeSplit: false,
     rollupOptions: {
       external: (id) => {
-        // Externalize React and React DOM only
-        // @supabase/supabase-js is now bundled with the SDK
-        if (id === 'react' || id === 'react-dom') {
-          return true;
-        }
-        // Externalize React JSX runtime
-        if (id.startsWith('react/') || id.startsWith('react-dom/')) {
-          return true;
-        }
+        if (id === 'react' || id === 'react-dom' || id === 'sonner') return true;
+        if (id.startsWith('react/') || id.startsWith('react-dom/')) return true;
         return false;
       },
       output: {
         globals: {
           react: 'React',
           'react-dom': 'ReactDOM',
+          sonner: 'sonner',
         },
         assetFileNames: (assetInfo) => {
-          if (assetInfo.name === 'style.css') {
-            return 'style.css';
-          }
-          return assetInfo.name || 'asset';
+          const name = assetInfo.name ?? '';
+          if (name.endsWith('.css')) return 'index.css';
+          return name || 'asset';
         },
       },
     },

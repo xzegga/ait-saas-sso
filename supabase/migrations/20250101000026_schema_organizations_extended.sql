@@ -1,6 +1,6 @@
 -- ==============================================================================
 -- 026 - ORGANIZATIONS EXTENDED (slug, legal_name, tax_id, status, support_email, phone)
---       + ORGANIZATION_ADDRESSES (addresses by type: billing, shipping, legal, etc.)
+--       + ORGANIZATION_ADDRESSES (addresses by type: billing, legal)
 -- ==============================================================================
 
 -- -----------------------------------------------------------------------------
@@ -44,12 +44,12 @@ create table public.organization_addresses (
   updated_at timestamptz default now(),
   unique(org_id, address_type),
   constraint organization_addresses_type_check check (
-    address_type in ('billing', 'shipping', 'legal', 'headquarters')
+    address_type in ('billing', 'legal')
   )
 );
 
-comment on table public.organization_addresses is 'Addresses for organizations, classified by type (billing, shipping, legal, headquarters).';
-comment on column public.organization_addresses.address_type is 'Type of address: billing, shipping, legal, headquarters.';
+comment on table public.organization_addresses is 'Addresses for organizations, classified by type (billing, legal).';
+comment on column public.organization_addresses.address_type is 'Type of address: billing or legal.';
 comment on column public.organization_addresses.country_code is 'ISO 3166-1 alpha-2 country code (e.g. ES, US).';
 
 create index if not exists idx_organization_addresses_org_id on public.organization_addresses(org_id);

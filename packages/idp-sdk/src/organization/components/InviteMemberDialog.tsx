@@ -3,7 +3,9 @@
  */
 
 import React, { useState, FormEvent } from 'react';
+import { toast } from 'sonner';
 import { useInviteMember } from '../hooks/useInviteMember';
+import { ConfirmSaveDialog } from '../../shared/components/ConfirmSaveDialog';
 
 export interface InviteMemberDialogProps {
   organizationId: string;
@@ -21,16 +23,23 @@ export const InviteMemberDialog: React.FC<InviteMemberDialogProps> = ({
   const { inviteMember, loading, error } = useInviteMember(organizationId);
   const [email, setEmail] = useState('');
   const [role, setRole] = useState('member');
+  const [showConfirm, setShowConfirm] = useState(false);
 
-  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    
+    setShowConfirm(true);
+  };
+
+  const handleConfirmInvite = async () => {
     try {
       await inviteMember({ email, role });
+      toast.success('Invitation sent successfully');
       onSuccess?.();
       onClose();
     } catch (err: any) {
-      onError?.(err);
+      const message = err instanceof Error ? err.message : 'Error sending invitation';
+      toast.error(message);
+      onError?.(err instanceof Error ? err : new Error(message));
     }
   };
 
@@ -97,6 +106,16 @@ export const InviteMemberDialog: React.FC<InviteMemberDialogProps> = ({
           </div>
         </form>
       </div>
+      <ConfirmSaveDialog
+        open={showConfirm}
+        onOpenChange={setShowConfirm}
+        title="Confirm send"
+        description="Do you want to send the invitation to this email?"
+        confirmLabel="Send invitation"
+        cancelLabel="Cancel"
+        onConfirm={handleConfirmInvite}
+        loading={loading}
+      />
     </div>
   );
 };

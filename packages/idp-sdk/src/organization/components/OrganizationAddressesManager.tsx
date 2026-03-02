@@ -1,10 +1,12 @@
 /**
  * Organization Addresses Manager – add, edit, and delete addresses by type
- * (billing, shipping, legal, headquarters).
+ * (billing, legal).
  */
 
 import React, { useState, useCallback } from 'react';
+import { toast } from 'sonner';
 import { useOrganizationAddresses } from '../hooks/useOrganizationAddresses';
+import { ConfirmSaveDialog } from '../../shared/components/ConfirmSaveDialog';
 import type {
   OrganizationAddress,
   OrganizationAddressType,
@@ -14,9 +16,7 @@ import type {
 
 const ADDRESS_TYPES: { value: OrganizationAddressType; label: string }[] = [
   { value: 'billing', label: 'Billing' },
-  { value: 'shipping', label: 'Shipping' },
   { value: 'legal', label: 'Legal' },
-  { value: 'headquarters', label: 'Headquarters' },
 ];
 
 function getAddressByType(addresses: OrganizationAddress[], type: OrganizationAddressType): OrganizationAddress | undefined {
@@ -51,6 +51,9 @@ export const OrganizationAddressesManager: React.FC<OrganizationAddressesManager
   const [form, setForm] = useState(emptyForm);
   const [saving, setSaving] = useState(false);
   const [deletingType, setDeletingType] = useState<OrganizationAddressType | null>(null);
+  const [confirmPending, setConfirmPending] = useState<
+    { kind: 'save_add' } | { kind: 'save_edit' } | { kind: 'delete'; type: OrganizationAddressType } | null
+  >(null);
 
   const resetForm = useCallback(() => {
     setForm(emptyForm);
@@ -85,7 +88,7 @@ export const OrganizationAddressesManager: React.FC<OrganizationAddressesManager
     setAddingType(null);
   };
 
-  const handleSaveAdd = async () => {
+  const performSaveAdd = async () => {
     if (!addingType) return;
     setSaving(true);
     try {
@@ -94,40 +97,60 @@ export const OrganizationAddressesManager: React.FC<OrganizationAddressesManager
         ...form,
       });
       resetForm();
+      toast.success('Address added successfully');
       onSuccess?.();
     } catch (err: any) {
+      const msg = err instanceof Error ? err.message : 'Error saving address';
+      toast.error(msg);
       onError?.(err instanceof Error ? err : new Error(String(err)));
     } finally {
       setSaving(false);
     }
   };
 
-  const handleSaveEdit = async () => {
+  const performSaveEdit = async () => {
     if (!editingType) return;
     setSaving(true);
     try {
       await updateAddress(editingType, form);
       resetForm();
+      toast.success('Address updated successfully');
       onSuccess?.();
     } catch (err: any) {
+      const msg = err instanceof Error ? err.message : 'Error saving address';
+      toast.error(msg);
       onError?.(err instanceof Error ? err : new Error(String(err)));
     } finally {
       setSaving(false);
     }
   };
 
-  const handleDelete = async (type: OrganizationAddressType) => {
-    if (!window.confirm(`Delete ${type} address?`)) return;
+  const performDelete = async (type: OrganizationAddressType) => {
     setDeletingType(type);
     try {
       await deleteAddress(type);
       resetForm();
+      toast.success('Address deleted successfully');
       onSuccess?.();
     } catch (err: any) {
+      const msg = err instanceof Error ? err.message : 'Error deleting address';
+      toast.error(msg);
       onError?.(err instanceof Error ? err : new Error(String(err)));
     } finally {
       setDeletingType(null);
     }
+  };
+
+  const handleSaveAdd = () => setConfirmPending({ kind: 'save_add' });
+  const handleSaveEdit = () => setConfirmPending({ kind: 'save_edit' });
+  const handleDelete = (type: OrganizationAddressType) => setConfirmPending({ kind: 'delete', type });
+
+  const handleConfirmAction = async () => {
+    if (!confirmPending) return;
+    if (confirmPending.kind === 'save_add') await performSaveAdd();
+    else if (confirmPending.kind === 'save_edit') await performSaveEdit();
+    else await performDelete(confirmPending.type);
+    setConfirmPending(null);
   };
 
   const renderForm = (type: OrganizationAddressType, isAdd: boolean) => (
@@ -211,12 +234,22 @@ export const OrganizationAddressesManager: React.FC<OrganizationAddressesManager
   );
 
   if (loading) {
-    return <div className={`idp-loading ${className}`}>Loading addresses...</div>;
+    return (
+      <div className={`idp-card idp-organization-addresses-manager ${className}`}>
+        <div className="idp-card-header">
+          <h3 className="idp-card-title">Addresses</h3>
+        </div>
+        <div className="idp-card-body idp-loading">Loading addresses...</div>
+      </div>
+    );
   }
 
   return (
-    <div className={`idp-organization-addresses-manager ${className}`}>
-      <h3 className="idp-form-title">Addresses</h3>
+    <div className={`idp-card idp-organization-addresses-manager ${className}`}>
+      <div className="idp-card-header">
+        <h3 className="idp-card-title">Addresses</h3>
+      </div>
+      <div className="idp-card-body">
       {error && (
         <div className="idp-error-message" role="alert">
           {error.message}
@@ -281,6 +314,28 @@ export const OrganizationAddressesManager: React.FC<OrganizationAddressesManager
           </div>
         );
       })}
+      </div>
+
+      {confirmPending && (
+        <ConfirmSaveDialog
+          open={!!confirmPending}
+          onOpenChange={(open) => !open && setConfirmPending(null)}
+          title={
+            confirmPending.kind === 'delete'
+              ? 'Confirm delete'
+              : 'Confirm save'
+          }
+          description={
+            confirmPending.kind === 'delete'
+              ? `Delete the ${confirmPending.type} address?`
+              : 'Do you want to save the address changes?'
+          }
+          confirmLabel={confirmPending.kind === 'delete' ? 'Delete' : 'Save'}
+          cancelLabel="Cancel"
+          onConfirm={handleConfirmAction}
+          loading={saving || deletingType !== null}
+        />
+      )}
     </div>
   );
 };
